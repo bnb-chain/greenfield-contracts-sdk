@@ -86,14 +86,6 @@ abstract contract BucketApp is Ownable, Initializable {
     }
 
     /*----------------- external functions -----------------*/
-    function createBucket(
-        bytes calldata _bucketName,
-        BucketStorage.BucketVisibilityType _visibility,
-        uint64 _chargedReadQuota
-    ) external virtual {}
-
-    function deleteBucket(uint256 tokenId) external virtual {}
-
     function retryPackage() external onlyOperator {
         IBucketHub(bucketHub).retryPackage();
     }
@@ -138,6 +130,20 @@ abstract contract BucketApp is Ownable, Initializable {
     function _sendCreateBucketPacakge(
         address _spAddress,
         uint256 _expireHeight,
+        bytes calldata _sig
+    ) internal {
+        BucketStorage.CreateBucketSynPackage memory createPkg = _getCreateBucketPackage();
+        createPkg.primarySpAddress = _spAddress;
+        createPkg.primarySpApprovalExpiredHeight = _expireHeight;
+        createPkg.primarySpSignature = _sig;
+
+        uint256 totalFee = _getTotalFee();
+        IBucketHub(bucketHub).createBucket{value: totalFee}(createPkg);
+    }
+
+    function _sendCreateBucketPacakge(
+        address _spAddress,
+        uint256 _expireHeight,
         bytes calldata _sig,
         bytes memory _callbackData
     ) internal {
@@ -157,8 +163,13 @@ abstract contract BucketApp is Ownable, Initializable {
         IBucketHub(bucketHub).createBucket{value: totalFee}(createPkg, callbackGasLimit, _extraData);
     }
 
+    function _deleteBucket(uint256 _tokenId) internal {
+        uint256 totalFee = _getTotalFee();
+        IBucketHub(bucketHub).deleteBucket{value: totalFee}(_tokenId);
+    }
+
     function _deleteBucket(uint256 _tokenId, bytes memory _callbackData) internal {
-        CmnStorage.ExtraData memory extraData = CmnStorage.ExtraData({
+        CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
             refundAddress: refundAddress,
             failureHandleStrategy: failureHandleStrategy,
@@ -166,7 +177,7 @@ abstract contract BucketApp is Ownable, Initializable {
         });
 
         uint256 totalFee = _getTotalFee();
-        IBucketHub(bucketHub).deleteBucket{value: totalFee}(_tokenId, callbackGasLimit, extraData);
+        IBucketHub(bucketHub).deleteBucket{value: totalFee}(_tokenId, callbackGasLimit, _extraData);
     }
 
     function _getTotalFee() internal returns (uint256) {

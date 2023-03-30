@@ -74,8 +74,6 @@ abstract contract ObjectApp is Ownable, Initializable {
     }
 
     /*----------------- external functions -----------------*/
-    function deleteObject(bytes calldata objectName) external virtual {}
-
     function retryPackage() external virtual onlyOperator {
         IObjectHub(objectHub).retryPackage();
     }
@@ -106,6 +104,11 @@ abstract contract ObjectApp is Ownable, Initializable {
     /*----------------- internal functions -----------------*/
     function _isOperator(address account) internal view returns (bool) {
         return operators[account];
+    }
+
+    function _deleteObject(uint256 _tokenId) internal {
+        uint256 totalFee = _getTotalFee();
+        IObjectHub(objectHub).deleteObject{value: totalFee}(_tokenId);
     }
 
     function _deleteObject(uint256 _tokenId, bytes memory _callbackData) internal {

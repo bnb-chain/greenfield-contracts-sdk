@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./interface/IGroupHub.sol";
 import "./interface/ICrossChain.sol";
 
-contract GroupApp is Ownable, Initializable {
+abstract contract GroupApp is Ownable, Initializable {
     /*----------------- constants -----------------*/
     uint8 public constant GROUP_CHANNEL_ID = 0x06;
 
@@ -91,14 +91,6 @@ contract GroupApp is Ownable, Initializable {
     }
 
     /*----------------- external functions -----------------*/
-    function createGroup(bytes calldata _groupName) external virtual {}
-
-    function deleteGroup(uint256 _tokenId) external virtual {}
-
-    function addMembers(uint256 _tokenId, address[] calldata _members) external virtual {}
-
-    function deleteMembers(uint256 _tokenId, address[] calldata _members) external virtual {}
-
     function retryPackage() external onlyOperator {
         IGroupHub(groupHub).retryPackage();
     }
@@ -131,8 +123,20 @@ contract GroupApp is Ownable, Initializable {
         return operators[account];
     }
 
-    function _deleteGroup(uint256 _tokenId, bytes memory _callbackData) internal virtual {
-        CmnStorage.ExtraData memory extraData = CmnStorage.ExtraData({
+    function _createGroup(
+        address _owner,
+        string memory _groupName
+    ) internal {
+        uint256 totalFee = _getTotalFee();
+        IGroupHub(groupHub).createGroup{value: totalFee}(_owner, _groupName);
+    }
+
+    function _createGroup(
+        address _owner,
+        string memory _groupName,
+        bytes memory _callbackData
+    ) internal {
+        CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
             refundAddress: refundAddress,
             failureHandleStrategy: failureHandleStrategy,
@@ -140,7 +144,42 @@ contract GroupApp is Ownable, Initializable {
         });
 
         uint256 totalFee = _getTotalFee();
-        IGroupHub(groupHub).deleteGroup{value: totalFee}(_tokenId, callbackGasLimit, extraData);
+        IGroupHub(groupHub).createGroup{value: totalFee}(_owner, _groupName, callbackGasLimit, _extraData);
+    }
+
+    function _deleteGroup(uint256 _tokenId) internal virtual {
+        uint256 totalFee = _getTotalFee();
+        IGroupHub(groupHub).deleteGroup{value: totalFee}(_tokenId);
+    }
+
+    function _deleteGroup(uint256 _tokenId, bytes memory _callbackData) internal virtual {
+        CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
+            appAddress: address(this),
+            refundAddress: refundAddress,
+            failureHandleStrategy: failureHandleStrategy,
+            callbackData: _callbackData
+        });
+
+        uint256 totalFee = _getTotalFee();
+        IGroupHub(groupHub).deleteGroup{value: totalFee}(_tokenId, callbackGasLimit, _extraData);
+    }
+
+    function _updateGroup(
+        address _owner,
+        uint256 _tokenId,
+        uint8 _opType,
+        address[] memory _members
+    ) internal {
+        GroupStorage.UpdateGroupSynPackage memory updatePkg = GroupStorage.UpdateGroupSynPackage({
+            operator: _owner,
+            id: _tokenId,
+            opType: _opType,
+            members: _members,
+            extraData: ""
+        });
+
+        uint256 totalFee = _getTotalFee();
+        IGroupHub(groupHub).updateGroup{value: totalFee}(updatePkg);
     }
 
     function _updateGroup(
