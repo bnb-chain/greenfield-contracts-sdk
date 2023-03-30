@@ -14,9 +14,5 @@
   "bugs": {
     "url": "https://github.com/bnb-chain/greenfield-contracts-sdk/issues"
   },
-  "homepage": "https://github.com/bnb-chain/greenfield-contracts-sdk#readme",
-  "dependencies": {
-    "@openzeppelin/contracts": "^4.8.2",
-    "@openzeppelin/contracts-upgradeable": "^4.8.2"
-  }
+  "homepage": "https://github.com/bnb-chain/greenfield-contracts-sdk#readme"
 }

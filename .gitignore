@@ -1,7 +1,6 @@
 .idea/
 cache/
 out/
-lib/
 node_modules/
 
 # Ignores development broadcast logs
@@ -12,8 +11,5 @@ node_modules/
 
 # Dotenv file
 .env
-
-# vscode settings
-remappings.txt
 
 **/.DS_Store
