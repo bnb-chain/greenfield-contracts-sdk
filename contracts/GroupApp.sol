@@ -2,45 +2,23 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
+import "./BaseApp.sol";
 import "./interface/IGroupHub.sol";
-import "./interface/ICrossChain.sol";
 
-abstract contract GroupApp is Ownable, Initializable {
+abstract contract GroupApp is BaseApp {
     /*----------------- constants -----------------*/
     uint8 public constant GROUP_CHANNEL_ID = 0x06;
 
-    // status of cross-chain package
-    uint32 public constant STATUS_SUCCESS = 0;
-    uint32 public constant STATUS_FAILED = 1;
-    uint32 public constant STATUS_UNEXPECTED = 2;
-
     // operation type
-    uint8 public constant TYPE_CREATE = 2;
-    uint8 public constant TYPE_DELETE = 3;
     uint8 public constant TYPE_UPDATE = 4;
 
     // update type
     uint8 public constant UPDATE_ADD = 1;
     uint8 public constant UPDATE_DELETE = 2;
 
-    mapping(address => bool) public operators;
-
+    /*----------------- storage -----------------*/
     // system contract
-    address public crossChain;
     address public groupHub;
-
-    // callback config
-    uint256 public callbackGasLimit;
-    address public refundAddress;
-    CmnStorage.FailureHandleStrategy public failureHandleStrategy;
-
-    // group name => token id
-    mapping(bytes => uint256) public tokenIdMap;
-    // token id => group name
-    mapping(uint256 => bytes) public groupNameMap;
 
     event CreateGroupSuccess(bytes groupName, uint256 indexed tokenId);
     event CreateGroupFailed(uint32 status, bytes groupName);
@@ -49,25 +27,7 @@ abstract contract GroupApp is Ownable, Initializable {
     event UpdateGroupSuccess(uint256 indexed tokenId);
     event UpdateGroupFailed(uint32 status, uint256 indexed tokenId);
 
-    modifier onlyOperator() {
-        require(msg.sender == owner() || _isOperator(msg.sender), "GroupApp: caller is not the owner or operator");
-        _;
-    }
-
-    function initialize(
-        address _crossChain,
-        address _groupHub,
-        uint256 _callbackGasLimit,
-        address _refundAddress,
-        CmnStorage.FailureHandleStrategy _failureHandleStrategy
-    ) public initializer {
-        crossChain = _crossChain;
-        groupHub = _groupHub;
-
-        callbackGasLimit = _callbackGasLimit;
-        refundAddress = _refundAddress;
-        failureHandleStrategy = _failureHandleStrategy;
-    }
+    // need initialize
 
     function greenfieldCall(
         uint32 status,
@@ -75,7 +35,7 @@ abstract contract GroupApp is Ownable, Initializable {
         uint8 operationType,
         uint256 resourceId,
         bytes calldata callbackData
-    ) external virtual {
+    ) external override virtual {
         require(msg.sender == crossChain, "GroupApp: caller is not the crossChain contract");
         require(channelId == GROUP_CHANNEL_ID, "GroupApp: channelId is not supported");
 
@@ -91,38 +51,15 @@ abstract contract GroupApp is Ownable, Initializable {
     }
 
     /*----------------- external functions -----------------*/
-    function retryPackage() external onlyOperator {
+    function retryPackage() external override virtual onlyOperator {
         IGroupHub(groupHub).retryPackage();
     }
 
-    function skipPackage() external onlyOperator {
+    function skipPackage() external override virtual onlyOperator {
         IGroupHub(groupHub).skipPackage();
     }
 
-    /*----------------- settings -----------------*/
-    function addOperator(address newOperator) public onlyOwner {
-        operators[newOperator] = true;
-    }
-
-    function removeOperator(address operator) public onlyOwner {
-        delete operators[operator];
-    }
-
-    function setCallbackConfig(
-        uint256 _callbackGasLimit,
-        address _refundAddress,
-        CmnStorage.FailureHandleStrategy _failureHandleStrategy
-    ) public onlyOperator {
-        callbackGasLimit = _callbackGasLimit;
-        refundAddress = _refundAddress;
-        failureHandleStrategy = _failureHandleStrategy;
-    }
-
     /*----------------- internal functions -----------------*/
-    function _isOperator(address account) internal view returns (bool) {
-        return operators[account];
-    }
-
     function _createGroup(
         address _owner,
         string memory _groupName
@@ -206,12 +143,6 @@ abstract contract GroupApp is Ownable, Initializable {
 
         uint256 totalFee = _getTotalFee();
         IGroupHub(groupHub).updateGroup{value: totalFee}(updatePkg, callbackGasLimit, _extraData);
-    }
-
-    function _getTotalFee() internal returns (uint256) {
-        (uint256 relayFee, uint256 minAckRelayFee) = ICrossChain(crossChain).getRelayFees();
-        uint256 gasPrice = ICrossChain(crossChain).callbackGasPrice();
-        return relayFee + minAckRelayFee + callbackGasLimit * gasPrice;
     }
 
     function _createGroupCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}
