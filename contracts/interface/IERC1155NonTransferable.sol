@@ -16,11 +16,7 @@ interface IERC1155NonTransferable {
      * transfers.
      */
     event TransferBatch(
-        address indexed operator,
-        address indexed from,
-        address indexed to,
-        uint256[] ids,
-        uint256[] values
+        address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values
     );
 
     /**
@@ -59,15 +55,7 @@ interface IERC1155NonTransferable {
         uint256[] calldata ids
     ) external view returns (uint256[] memory);
 
-    function mint(address to, uint256 id, uint256 value, bytes memory data) external;
+    function baseURI() external view returns (string memory);
 
-    function mintBatch(address to, uint256[] memory ids, uint256[] memory values, bytes memory data) external;
-
-    function burn(address owner, uint256 id, uint256 value) external;
-
-    function burnBatch(address owner, uint256[] memory ids, uint256[] memory values) external;
-
-    function setBaseURI(string calldata newURI) external;
-
-    function setTokenURI(uint256 id, string calldata newURI) external;
+    function uri(uint256 id) external view returns (string memory);
 }

@@ -7,8 +7,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./interface/IGroupHub.sol";
 import "./interface/ICrossChain.sol";
-import "./interface/IERC721NonTransferable.sol";
-import "./interface/IERC1155NonTransferable.sol";
 
 contract GroupApp is Ownable, Initializable {
     /*----------------- constants -----------------*/
@@ -28,27 +26,11 @@ contract GroupApp is Ownable, Initializable {
     uint8 public constant UPDATE_ADD = 1;
     uint8 public constant UPDATE_DELETE = 2;
 
-    // authorization code
-    // can be used by bit operations
-    uint32 public constant AUTH_CODE_CREATE = 1; // 0001
-    uint32 public constant AUTH_CODE_DELETE = 2; // 0010
-    uint32 public constant AUTH_CODE_UPDATE = 4; // 0100
-
-    // role
-    bytes32 public constant ROLE_CREATE = keccak256("ROLE_CREATE");
-    bytes32 public constant ROLE_DELETE = keccak256("ROLE_DELETE");
-    bytes32 public constant ROLE_UPDATE = keccak256("ROLE_UPDATE");
-
     mapping(address => bool) public operators;
 
     // system contract
     address public crossChain;
-    address public tokenHub;
     address public groupHub;
-    address public groupToken;
-    address public memberToken;
-
-    address public paymentAddress;
 
     // callback config
     uint256 public callbackGasLimit;
@@ -62,10 +44,10 @@ contract GroupApp is Ownable, Initializable {
 
     event CreateGroupSuccess(bytes groupName, uint256 indexed tokenId);
     event CreateGroupFailed(uint32 status, bytes groupName);
-    event DeleteGroupSuccess(bytes groupName, uint256 indexed tokenId);
+    event DeleteGroupSuccess(uint256 indexed tokenId);
     event DeleteGroupFailed(uint32 status, uint256 indexed tokenId);
-    event UpdateGroupSuccess(bytes groupName, uint256 indexed tokenId);
-    event UpdateGroupFailed(uint32 status, bytes groupName, uint256 indexed tokenId);
+    event UpdateGroupSuccess(uint256 indexed tokenId);
+    event UpdateGroupFailed(uint32 status, uint256 indexed tokenId);
 
     modifier onlyOperator() {
         require(msg.sender == owner() || _isOperator(msg.sender), "GroupApp: caller is not the owner or operator");
@@ -74,19 +56,13 @@ contract GroupApp is Ownable, Initializable {
 
     function initialize(
         address _crossChain,
-        address _tokenHub,
         address _groupHub,
-        address _paymentAddress,
         uint256 _callbackGasLimit,
         address _refundAddress,
         CmnStorage.FailureHandleStrategy _failureHandleStrategy
     ) public initializer {
         crossChain = _crossChain;
-        tokenHub = _tokenHub;
         groupHub = _groupHub;
-        groupToken = IGroupHub(groupHub).ERC721Token();
-        memberToken = IGroupHub(groupHub).ERC1155Token();
-        paymentAddress = _paymentAddress;
 
         callbackGasLimit = _callbackGasLimit;
         refundAddress = _refundAddress;
@@ -106,102 +82,22 @@ contract GroupApp is Ownable, Initializable {
         if (operationType == TYPE_CREATE) {
             _createGroupCallback(status, resourceId, callbackData);
         } else if (operationType == TYPE_DELETE) {
-            _deleteGroupCallback(status, resourceId);
+            _deleteGroupCallback(status, resourceId, callbackData);
+        } else if (operationType == TYPE_UPDATE) {
+            _updateGroupCallback(status, resourceId, callbackData);
         } else {
             revert("GroupApp: operationType is not supported");
         }
     }
 
     /*----------------- external functions -----------------*/
-    function createGroup(
-        bytes calldata groupName
-    ) external {
-        require(tokenIdMap[groupName] == 0, "GroupApp: group already exists");
+    function createGroup(bytes calldata _groupName) external virtual {}
 
-        CmnStorage.ExtraData memory extraData = CmnStorage.ExtraData({
-            appAddress: address(this),
-            refundAddress: refundAddress,
-            failureHandleStrategy: failureHandleStrategy,
-            callbackData: groupName
-        });
+    function deleteGroup(uint256 _tokenId) external virtual {}
 
-        uint256 totalFee = _getTotalFee();
-        IGroupHub(groupHub).createGroup{value: totalFee}(msg.sender, string(groupName), callbackGasLimit, extraData);
-    }
+    function addMembers(uint256 _tokenId, address[] calldata _members) external virtual {}
 
-    function deleteGroup(bytes calldata groupName) external {
-        uint256 tokenId = tokenIdMap[groupName];
-        require(tokenId != 0, "GroupApp: group not exists");
-        require(
-            IERC721NonTransferable(groupToken).ownerOf(tokenId) == msg.sender,
-            "GroupApp: caller is not the owner of the group"
-        );
-
-        _deleteGroup(tokenId, groupName);
-    }
-
-    function deleteGroup(uint256 tokenId) external {
-        require(
-            IERC721NonTransferable(groupToken).ownerOf(tokenId) == msg.sender,
-            "GroupApp: caller is not the owner of the group"
-        );
-        bytes memory groupName = groupNameMap[tokenId];
-
-        _deleteGroup(tokenId, groupName);
-    }
-
-    function addMembers(bytes calldata groupName, address[] calldata members) external {
-        uint256 tokenId = tokenIdMap[groupName];
-        require(tokenId != 0, "GroupApp: group not exists");
-        require(
-            IERC721NonTransferable(groupToken).ownerOf(tokenId) == msg.sender,
-            "GroupApp: caller is not the owner of the group"
-        );
-
-        _updateGroup(msg.sender, groupName, tokenId, UPDATE_ADD, members);
-    }
-
-    function addMembers(uint256 tokenId, address[] calldata members) external {
-        require(
-            IERC721NonTransferable(groupToken).ownerOf(tokenId) == msg.sender,
-            "GroupApp: caller is not the owner of the group"
-        );
-        bytes memory groupName = groupNameMap[tokenId];
-
-        _updateGroup(msg.sender, groupName, tokenId, UPDATE_ADD, members);
-    }
-
-    function deleteMembers(bytes calldata groupName, address[] calldata members) external {
-        uint256 tokenId = tokenIdMap[groupName];
-        require(tokenId != 0, "GroupApp: group not exists");
-        require(
-            IERC721NonTransferable(groupToken).ownerOf(tokenId) == msg.sender,
-            "GroupApp: caller is not the owner of the group"
-        );
-
-        _updateGroup(msg.sender, groupName, tokenId, UPDATE_DELETE, members);
-    }
-
-    function deleteMembers(uint256 tokenId, address[] calldata members) external {
-        require(
-            IERC721NonTransferable(groupToken).ownerOf(tokenId) == msg.sender,
-            "GroupApp: caller is not the owner of the group"
-        );
-        bytes memory groupName = groupNameMap[tokenId];
-
-        _updateGroup(msg.sender, groupName, tokenId, UPDATE_DELETE, members);
-    }
-
-    function registerGroup(bytes calldata groupName, uint256 tokenId) external {
-        require(tokenIdMap[groupName] == 0, "GroupApp: group already exists");
-        require(
-            IERC721NonTransferable(groupToken).ownerOf(tokenId) == msg.sender,
-            "GroupApp: caller is not the owner of the group"
-        );
-
-        tokenIdMap[groupName] = tokenId;
-        groupNameMap[tokenId] = groupName;
-    }
+    function deleteMembers(uint256 _tokenId, address[] calldata _members) external virtual {}
 
     function retryPackage() external onlyOperator {
         IGroupHub(groupHub).retryPackage();
@@ -220,10 +116,6 @@ contract GroupApp is Ownable, Initializable {
         delete operators[operator];
     }
 
-    function setPaymentAddress(address _paymentAddress) public onlyOperator {
-        paymentAddress = _paymentAddress;
-    }
-
     function setCallbackConfig(
         uint256 _callbackGasLimit,
         address _refundAddress,
@@ -239,57 +131,42 @@ contract GroupApp is Ownable, Initializable {
         return operators[account];
     }
 
-    function _deleteGroup(uint256 tokenId, bytes memory groupName) internal {
+    function _deleteGroup(uint256 _tokenId, bytes memory _callbackData) internal virtual {
         CmnStorage.ExtraData memory extraData = CmnStorage.ExtraData({
             appAddress: address(this),
             refundAddress: refundAddress,
             failureHandleStrategy: failureHandleStrategy,
-            callbackData: groupName
+            callbackData: _callbackData
         });
 
         uint256 totalFee = _getTotalFee();
-        IGroupHub(groupHub).deleteGroup{value: totalFee}(tokenId, callbackGasLimit, extraData);
+        IGroupHub(groupHub).deleteGroup{value: totalFee}(_tokenId, callbackGasLimit, extraData);
     }
 
-    function _updateGroup(address owner, bytes memory groupName, uint256 tokenId, uint8 opType, address[] memory newMembers) internal {
-        GroupStorage.UpdateGroupSynPackage memory pkg = GroupStorage.UpdateGroupSynPackage({
-            operator: owner,
-            id: tokenId,
-            opType: opType,
-            members: newMembers,
+    function _updateGroup(
+        address _owner,
+        uint256 _tokenId,
+        uint8 _opType,
+        address[] memory _members,
+        bytes memory _callbackData
+    ) internal {
+        GroupStorage.UpdateGroupSynPackage memory updatePkg = GroupStorage.UpdateGroupSynPackage({
+            operator: _owner,
+            id: _tokenId,
+            opType: _opType,
+            members: _members,
             extraData: ""
         });
 
-        CmnStorage.ExtraData memory extraData = CmnStorage.ExtraData({
+        CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
             refundAddress: refundAddress,
             failureHandleStrategy: failureHandleStrategy,
-            callbackData: groupName
+            callbackData: _callbackData
         });
 
         uint256 totalFee = _getTotalFee();
-        IGroupHub(groupHub).updateGroup{value: totalFee}(pkg, callbackGasLimit, extraData);
-    }
-
-    function _createGroupCallback(uint32 status, uint256 tokenId, bytes memory callbackData) internal {
-        if (status == STATUS_SUCCESS) {
-            tokenIdMap[callbackData] = tokenId;
-            groupNameMap[tokenId] = callbackData;
-            emit CreateGroupSuccess(callbackData, tokenId);
-        } else {
-            emit CreateGroupFailed(status, callbackData);
-        }
-    }
-
-    function _deleteGroupCallback(uint32 status, uint256 tokenId) internal {
-        if (status == STATUS_SUCCESS) {
-            bytes memory groupName = groupNameMap[tokenId];
-            delete tokenIdMap[groupName];
-            delete groupNameMap[tokenId];
-            emit DeleteGroupSuccess(groupName, tokenId);
-        } else {
-            emit DeleteGroupFailed(status, tokenId);
-        }
+        IGroupHub(groupHub).updateGroup{value: totalFee}(updatePkg, callbackGasLimit, _extraData);
     }
 
     function _getTotalFee() internal returns (uint256) {
@@ -297,4 +174,10 @@ contract GroupApp is Ownable, Initializable {
         uint256 gasPrice = ICrossChain(crossChain).callbackGasPrice();
         return relayFee + minAckRelayFee + callbackGasLimit * gasPrice;
     }
+
+    function _createGroupCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}
+
+    function _deleteGroupCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}
+
+    function _updateGroupCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}
 }

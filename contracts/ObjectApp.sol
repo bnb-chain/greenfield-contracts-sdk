@@ -7,9 +7,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./interface/IObjectHub.sol";
 import "./interface/ICrossChain.sol";
-import "./interface/IERC721NonTransferable.sol";
 
-contract ObjectApp is Ownable, Initializable {
+abstract contract ObjectApp is Ownable, Initializable {
     using DoubleEndedQueueUpgradeable for DoubleEndedQueueUpgradeable.Bytes32Deque;
 
     /*----------------- constants -----------------*/
@@ -23,36 +22,18 @@ contract ObjectApp is Ownable, Initializable {
     // operation type
     uint8 public constant TYPE_DELETE = 3;
 
-    // authorization code
-    // can be used by bit operations
-    uint32 public constant AUTH_CODE_DELETE = 2; // 0010
-
-    // role
-    bytes32 public constant ROLE_DELETE = keccak256("ROLE_DELETE");
-
     mapping(address => bool) public operators;
 
     // system contract
     address public crossChain;
-    address public tokenHub;
     address public objectHub;
-    address public objectToken;
-
-    address public paymentAddress;
 
     // callback config
     uint256 public callbackGasLimit;
     address public refundAddress;
     CmnStorage.FailureHandleStrategy public failureHandleStrategy;
 
-    // object name => token id
-    mapping(bytes => uint256) public tokenIdMap;
-    // token id => object name
-    mapping(uint256 => bytes) public objectNameMap;
-
-    event CreateObjectSuccess(bytes objectName, uint256 indexed tokenId);
-    event CreateObjectFailed(uint32 status, bytes objectName);
-    event DeleteObjectSuccess(bytes objectName, uint256 indexed tokenId);
+    event DeleteObjectSuccess(uint256 indexed tokenId);
     event DeleteObjectFailed(uint32 status, uint256 indexed tokenId);
 
     modifier onlyOperator() {
@@ -62,18 +43,13 @@ contract ObjectApp is Ownable, Initializable {
 
     function initialize(
         address _crossChain,
-        address _tokenHub,
         address _objectHub,
-        address _paymentAddress,
         uint256 _callbackGasLimit,
         address _refundAddress,
         CmnStorage.FailureHandleStrategy _failureHandleStrategy
     ) public initializer {
         crossChain = _crossChain;
-        tokenHub = _tokenHub;
         objectHub = _objectHub;
-        objectToken = IObjectHub(objectHub).ERC721Token();
-        paymentAddress = _paymentAddress;
 
         callbackGasLimit = _callbackGasLimit;
         refundAddress = _refundAddress;
@@ -85,56 +61,26 @@ contract ObjectApp is Ownable, Initializable {
         uint8 channelId,
         uint8 operationType,
         uint256 resourceId,
-        bytes calldata
+        bytes calldata callbackData
     ) external virtual {
         require(msg.sender == crossChain, "ObjectApp: caller is not the crossChain contract");
         require(channelId == OBJECT_CHANNEL_ID, "ObjectApp: channelId is not supported");
 
         if (operationType == TYPE_DELETE) {
-            _deleteObjectCallback(status, resourceId);
+            _deleteObjectCallback(status, resourceId, callbackData);
         } else {
             revert("ObjectApp: operationType is not supported");
         }
     }
 
     /*----------------- external functions -----------------*/
-    function deleteObject(bytes calldata objectName) external {
-        uint256 tokenId = tokenIdMap[objectName];
-        require(tokenId != 0, "ObjectApp: object not exists");
-        require(
-            IERC721NonTransferable(objectToken).ownerOf(tokenId) == msg.sender,
-            "ObjectApp: caller is not the owner of the object"
-        );
+    function deleteObject(bytes calldata objectName) external virtual {}
 
-        _deleteObject(tokenId, objectName);
-    }
-
-    function deleteObject(uint256 tokenId) external {
-        require(
-            IERC721NonTransferable(objectToken).ownerOf(tokenId) == msg.sender,
-            "ObjectApp: caller is not the owner of the object"
-        );
-        bytes memory objectName = objectNameMap[tokenId];
-
-        _deleteObject(tokenId, objectName);
-    }
-
-    function registerObject(bytes calldata objectName, uint256 tokenId) external {
-        require(tokenIdMap[objectName] == 0, "ObjectApp: object already exists");
-        require(
-            IERC721NonTransferable(objectToken).ownerOf(tokenId) == msg.sender,
-            "ObjectApp: caller is not the owner of the object"
-        );
-
-        tokenIdMap[objectName] = tokenId;
-        objectNameMap[tokenId] = objectName;
-    }
-
-    function retryPackage() external onlyOperator {
+    function retryPackage() external virtual onlyOperator {
         IObjectHub(objectHub).retryPackage();
     }
 
-    function skipPackage() external onlyOperator {
+    function skipPackage() external virtual onlyOperator {
         IObjectHub(objectHub).skipPackage();
     }
 
@@ -145,10 +91,6 @@ contract ObjectApp is Ownable, Initializable {
 
     function removeOperator(address operator) public onlyOwner {
         delete operators[operator];
-    }
-
-    function setPaymentAddress(address _paymentAddress) public onlyOperator {
-        paymentAddress = _paymentAddress;
     }
 
     function setCallbackConfig(
@@ -166,27 +108,16 @@ contract ObjectApp is Ownable, Initializable {
         return operators[account];
     }
 
-    function _deleteObject(uint256 tokenId, bytes memory objectName) internal {
-        CmnStorage.ExtraData memory extraData = CmnStorage.ExtraData({
+    function _deleteObject(uint256 _tokenId, bytes memory _callbackData) internal {
+        CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
             refundAddress: refundAddress,
             failureHandleStrategy: failureHandleStrategy,
-            callbackData: objectName
+            callbackData: _callbackData
         });
 
         uint256 totalFee = _getTotalFee();
-        IObjectHub(objectHub).deleteObject{value: totalFee}(tokenId, callbackGasLimit, extraData);
-    }
-
-    function _deleteObjectCallback(uint32 status, uint256 tokenId) internal {
-        if (status == STATUS_SUCCESS) {
-            bytes memory objectName = objectNameMap[tokenId];
-            delete tokenIdMap[objectName];
-            delete objectNameMap[tokenId];
-            emit DeleteObjectSuccess(objectName, tokenId);
-        } else {
-            emit DeleteObjectFailed(status, tokenId);
-        }
+        IObjectHub(objectHub).deleteObject{value: totalFee}(_tokenId, callbackGasLimit, _extraData);
     }
 
     function _getTotalFee() internal returns (uint256) {
@@ -194,4 +125,6 @@ contract ObjectApp is Ownable, Initializable {
         uint256 gasPrice = ICrossChain(crossChain).callbackGasPrice();
         return relayFee + minAckRelayFee + callbackGasLimit * gasPrice;
     }
+
+    function _deleteObjectCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}
 }

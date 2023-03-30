@@ -33,12 +33,6 @@ interface IERC721NonTransferable {
 
     function tokenURI(uint256 tokenId) external view returns (string memory);
 
-    function setBaseURI(string calldata newURI) external;
-
-    function mint(address to, uint256 tokenId) external;
-
-    function burn(uint256 tokenId) external;
-
     function getApproved(uint256 tokenId) external view returns (address operator);
 
     function isApprovedForAll(address owner, address operator) external view returns (bool);

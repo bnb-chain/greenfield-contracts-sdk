@@ -7,9 +7,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./interface/IBucketHub.sol";
 import "./interface/ICrossChain.sol";
-import "./interface/IERC721NonTransferable.sol";
 
-contract BucketApp is Ownable, Initializable {
+abstract contract BucketApp is Ownable, Initializable {
     using DoubleEndedQueueUpgradeable for DoubleEndedQueueUpgradeable.Bytes32Deque;
 
     /*----------------- constants -----------------*/
@@ -24,41 +23,25 @@ contract BucketApp is Ownable, Initializable {
     uint8 public constant TYPE_CREATE = 2;
     uint8 public constant TYPE_DELETE = 3;
 
-    // authorization code
-    // can be used by bit operations
-    uint32 public constant AUTH_CODE_CREATE = 1; // 0001
-    uint32 public constant AUTH_CODE_DELETE = 2; // 0010
-
-    // role
-    bytes32 public constant ROLE_CREATE = keccak256("ROLE_CREATE");
-    bytes32 public constant ROLE_DELETE = keccak256("ROLE_DELETE");
-
     mapping(address => bool) public operators;
 
     // system contract
     address public crossChain;
-    address public tokenHub;
     address public bucketHub;
-    address public bucketToken;
-
-    address public paymentAddress;
 
     // callback config
     uint256 public callbackGasLimit;
     address public refundAddress;
     CmnStorage.FailureHandleStrategy public failureHandleStrategy;
 
+    address public paymentAddress;
+
     DoubleEndedQueueUpgradeable.Bytes32Deque public createQueue;
     mapping(bytes32 => BucketStorage.CreateBucketSynPackage) public createQueueMap;
 
-    // bucket name => token id
-    mapping(bytes => uint256) public tokenIdMap;
-    // token id => bucket name
-    mapping(uint256 => bytes) public bucketNameMap;
-
     event CreateBucketSuccess(bytes bucketName, uint256 indexed tokenId);
     event CreateBucketFailed(uint32 status, bytes bucketName);
-    event DeleteBucketSuccess(bytes bucketName, uint256 indexed tokenId);
+    event DeleteBucketSuccess(uint256 indexed tokenId);
     event DeleteBucketFailed(uint32 status, uint256 indexed tokenId);
 
     modifier onlyOperator() {
@@ -68,7 +51,6 @@ contract BucketApp is Ownable, Initializable {
 
     function initialize(
         address _crossChain,
-        address _tokenHub,
         address _bucketHub,
         address _paymentAddress,
         uint256 _callbackGasLimit,
@@ -76,9 +58,7 @@ contract BucketApp is Ownable, Initializable {
         CmnStorage.FailureHandleStrategy _failureHandleStrategy
     ) public initializer {
         crossChain = _crossChain;
-        tokenHub = _tokenHub;
         bucketHub = _bucketHub;
-        bucketToken = IBucketHub(bucketHub).ERC721Token();
         paymentAddress = _paymentAddress;
 
         callbackGasLimit = _callbackGasLimit;
@@ -99,7 +79,7 @@ contract BucketApp is Ownable, Initializable {
         if (operationType == TYPE_CREATE) {
             _createBucketCallback(status, resourceId, callbackData);
         } else if (operationType == TYPE_DELETE) {
-            _deleteBucketCallback(status, resourceId);
+            _deleteBucketCallback(status, resourceId, callbackData);
         } else {
             revert("BucketApp: operationType is not supported");
         }
@@ -107,82 +87,12 @@ contract BucketApp is Ownable, Initializable {
 
     /*----------------- external functions -----------------*/
     function createBucket(
-        bytes calldata bucketName,
-        BucketStorage.BucketVisibilityType visibility,
-        uint64 chargedReadQuota
-    ) external {
-        require(tokenIdMap[bucketName] == 0, "BucketApp: bucket already exists");
+        bytes calldata _bucketName,
+        BucketStorage.BucketVisibilityType _visibility,
+        uint64 _chargedReadQuota
+    ) external virtual {}
 
-        bytes32 packageHash = keccak256(abi.encodePacked(msg.sender, bucketName));
-        require(createQueueMap[packageHash].creator == address(0), "BucketApp: package already in queue");
-
-        createQueue.pushBack(packageHash);
-        createQueueMap[packageHash] = BucketStorage.CreateBucketSynPackage({
-            creator: msg.sender,
-            name: string(bucketName),
-            visibility: visibility,
-            paymentAddress: paymentAddress,
-            primarySpAddress: address(0),
-            primarySpApprovalExpiredHeight: 0,
-            primarySpSignature: "",
-            chargedReadQuota: chargedReadQuota,
-            extraData: ""
-        });
-    }
-
-    function deleteBucket(bytes calldata bucketName) external {
-        uint256 tokenId = tokenIdMap[bucketName];
-        require(tokenId != 0, "BucketApp: bucket not exists");
-        require(
-            IERC721NonTransferable(bucketToken).ownerOf(tokenId) == msg.sender,
-            "BucketApp: caller is not the owner of the bucket"
-        );
-
-        _deleteBucket(tokenId, bucketName);
-    }
-
-    function deleteBucket(uint256 tokenId) external {
-        require(
-            IERC721NonTransferable(bucketToken).ownerOf(tokenId) == msg.sender,
-            "BucketApp: caller is not the owner of the bucket"
-        );
-        bytes memory bucketName = bucketNameMap[tokenId];
-
-        _deleteBucket(tokenId, bucketName);
-    }
-
-    function registerBucket(bytes calldata bucketName, uint256 tokenId) external {
-        require(tokenIdMap[bucketName] == 0, "BucketApp: bucket already exists");
-        require(
-            IERC721NonTransferable(bucketToken).ownerOf(tokenId) == msg.sender,
-            "BucketApp: caller is not the owner of the bucket"
-        );
-
-        tokenIdMap[bucketName] = tokenId;
-        bucketNameMap[tokenId] = bucketName;
-    }
-
-    function getCreateBucketPackage() public view returns (BucketStorage.CreateBucketSynPackage memory) {
-        bytes32 packageHash = createQueue.front();
-        return createQueueMap[packageHash];
-    }
-
-    function sendCreateBucketPacakge(address _spAddress, uint256 _expireHeight, bytes calldata _sig) external payable onlyOperator {
-        BucketStorage.CreateBucketSynPackage memory package = getCreateBucketPackage();
-        package.primarySpAddress = _spAddress;
-        package.primarySpApprovalExpiredHeight = _expireHeight;
-        package.primarySpSignature = _sig;
-
-        CmnStorage.ExtraData memory extraData = CmnStorage.ExtraData({
-            appAddress: address(this),
-            refundAddress: refundAddress,
-            failureHandleStrategy: failureHandleStrategy,
-            callbackData: bytes(package.name)
-        });
-
-        uint256 totalFee = _getTotalFee();
-        IBucketHub(bucketHub).createBucket{value: totalFee}(package, callbackGasLimit, extraData);
-    }
+    function deleteBucket(uint256 tokenId) external virtual {}
 
     function retryPackage() external onlyOperator {
         IBucketHub(bucketHub).retryPackage();
@@ -220,37 +130,43 @@ contract BucketApp is Ownable, Initializable {
         return operators[account];
     }
 
-    function _deleteBucket(uint256 tokenId, bytes memory bucketName) internal {
+    function _getCreateBucketPackage() internal view returns (BucketStorage.CreateBucketSynPackage memory) {
+        bytes32 packageHash = createQueue.front();
+        return createQueueMap[packageHash];
+    }
+
+    function _sendCreateBucketPacakge(
+        address _spAddress,
+        uint256 _expireHeight,
+        bytes calldata _sig,
+        bytes memory _callbackData
+    ) internal {
+        BucketStorage.CreateBucketSynPackage memory createPkg = _getCreateBucketPackage();
+        createPkg.primarySpAddress = _spAddress;
+        createPkg.primarySpApprovalExpiredHeight = _expireHeight;
+        createPkg.primarySpSignature = _sig;
+
+        CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
+            appAddress: address(this),
+            refundAddress: refundAddress,
+            failureHandleStrategy: failureHandleStrategy,
+            callbackData: _callbackData
+        });
+
+        uint256 totalFee = _getTotalFee();
+        IBucketHub(bucketHub).createBucket{value: totalFee}(createPkg, callbackGasLimit, _extraData);
+    }
+
+    function _deleteBucket(uint256 _tokenId, bytes memory _callbackData) internal {
         CmnStorage.ExtraData memory extraData = CmnStorage.ExtraData({
             appAddress: address(this),
             refundAddress: refundAddress,
             failureHandleStrategy: failureHandleStrategy,
-            callbackData: bucketName
+            callbackData: _callbackData
         });
 
         uint256 totalFee = _getTotalFee();
-        IBucketHub(bucketHub).deleteBucket{value: totalFee}(tokenId, callbackGasLimit, extraData);
-    }
-
-    function _createBucketCallback(uint32 status, uint256 tokenId, bytes memory callbackData) internal {
-        if (status == STATUS_SUCCESS) {
-            tokenIdMap[callbackData] = tokenId;
-            bucketNameMap[tokenId] = callbackData;
-            emit CreateBucketSuccess(callbackData, tokenId);
-        } else {
-            emit CreateBucketFailed(status, callbackData);
-        }
-    }
-
-    function _deleteBucketCallback(uint32 status, uint256 tokenId) internal {
-        if (status == STATUS_SUCCESS) {
-            bytes memory bucketName = bucketNameMap[tokenId];
-            delete tokenIdMap[bucketName];
-            delete bucketNameMap[tokenId];
-            emit DeleteBucketSuccess(bucketName, tokenId);
-        } else {
-            emit DeleteBucketFailed(status, tokenId);
-        }
+        IBucketHub(bucketHub).deleteBucket{value: totalFee}(_tokenId, callbackGasLimit, extraData);
     }
 
     function _getTotalFee() internal returns (uint256) {
@@ -258,4 +174,8 @@ contract BucketApp is Ownable, Initializable {
         uint256 gasPrice = ICrossChain(crossChain).callbackGasPrice();
         return relayFee + minAckRelayFee + callbackGasLimit * gasPrice;
     }
+
+    function _createBucketCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}
+
+    function _deleteBucketCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}
 }
