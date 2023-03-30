@@ -8,10 +8,23 @@ import "../GroupApp.sol";
 
 contract EbookShop is BucketApp, ObjectApp, GroupApp {
     /*----------------- storage -----------------*/
+    // A series is a bucket which can include many ebooks
+    // A ebook is an object
+
+    // tokenId => series name
+    mapping(uint256 => string) public seriesName;
+    // series name => tokenId
+    mapping(string => uint256) public seriesId;
+
     // tokenId => Ebook name
-    mapping(uint256 => string) public nameToId;
+    mapping(uint256 => string) public eBookName;
     // Ebook name => tokenId
-    mapping(string => uint256) public IdToName;
+    mapping(string => uint256) public eBookId;
+
+    // tokenId => group name
+    mapping(uint256 => string) public groupName;
+    // group name => tokenId
+    mapping(string => uint256) public groupId;
 
     // PlaceHolder reserve for future use
     uint256[25] public EbookShopSlots;
