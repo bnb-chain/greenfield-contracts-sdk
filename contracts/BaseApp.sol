@@ -46,9 +46,9 @@ abstract contract BaseApp is Ownable, Initializable {
     ) external virtual {}
 
     /*----------------- external functions -----------------*/
-    function retryPackage() external virtual onlyOperator {}
+    function retryPackage(uint8 channelId) external virtual onlyOperator {}
 
-    function skipPackage() external virtual onlyOperator {}
+    function skipPackage(uint8 channelId) external virtual onlyOperator {}
 
     /*----------------- settings -----------------*/
     function addOperator(address newOperator) public onlyOwner {

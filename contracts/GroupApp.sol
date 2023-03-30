@@ -39,6 +39,25 @@ abstract contract GroupApp is BaseApp {
         require(msg.sender == crossChain, "GroupApp: caller is not the crossChain contract");
         require(channelId == GROUP_CHANNEL_ID, "GroupApp: channelId is not supported");
 
+        _groupGreenfieldCall(status, operationType, resourceId, callbackData);
+    }
+
+    /*----------------- external functions -----------------*/
+    function retryPackage(uint8) external override virtual onlyOperator {
+        IGroupHub(groupHub).retryPackage();
+    }
+
+    function skipPackage(uint8) external override virtual onlyOperator {
+        IGroupHub(groupHub).skipPackage();
+    }
+
+    /*----------------- internal functions -----------------*/
+    function _groupGreenfieldCall(        
+        uint32 status,
+        uint8 operationType,
+        uint256 resourceId,
+        bytes calldata callbackData
+    ) internal virtual {
         if (operationType == TYPE_CREATE) {
             _createGroupCallback(status, resourceId, callbackData);
         } else if (operationType == TYPE_DELETE) {
@@ -50,16 +69,6 @@ abstract contract GroupApp is BaseApp {
         }
     }
 
-    /*----------------- external functions -----------------*/
-    function retryPackage() external override virtual onlyOperator {
-        IGroupHub(groupHub).retryPackage();
-    }
-
-    function skipPackage() external override virtual onlyOperator {
-        IGroupHub(groupHub).skipPackage();
-    }
-
-    /*----------------- internal functions -----------------*/
     function _createGroup(
         address _owner,
         string memory _groupName

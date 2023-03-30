@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./BaseApp.sol"
+import "./BaseApp.sol";
 import "./interface/IBucketHub.sol";
 
 abstract contract BucketApp is BaseApp {
@@ -35,21 +35,15 @@ abstract contract BucketApp is BaseApp {
         require(msg.sender == crossChain, "BucketApp: caller is not the crossChain contract");
         require(channelId == BUCKET_CHANNEL_ID, "BucketApp: channelId is not supported");
 
-        if (operationType == TYPE_CREATE) {
-            _createBucketCallback(status, resourceId, callbackData);
-        } else if (operationType == TYPE_DELETE) {
-            _deleteBucketCallback(status, resourceId, callbackData);
-        } else {
-            revert("BucketApp: operationType is not supported");
-        }
+        _bucketGreenfieldCall(status, operationType, resourceId, callbackData);
     }
 
     /*----------------- external functions -----------------*/
-    function retryPackage() external override virtual onlyOperator {
+    function retryPackage(uint8) external override virtual onlyOperator {
         IBucketHub(bucketHub).retryPackage();
     }
 
-    function skipPackage() external override virtual onlyOperator {
+    function skipPackage(uint8) external override virtual onlyOperator {
         IBucketHub(bucketHub).skipPackage();
     }
 
@@ -59,6 +53,21 @@ abstract contract BucketApp is BaseApp {
     }
 
     /*----------------- internal functions -----------------*/
+    function _bucketGreenfieldCall(        
+        uint32 status,
+        uint8 operationType,
+        uint256 resourceId,
+        bytes calldata callbackData
+    ) internal virtual {
+        if (operationType == TYPE_CREATE) {
+            _createBucketCallback(status, resourceId, callbackData);
+        } else if (operationType == TYPE_DELETE) {
+            _deleteBucketCallback(status, resourceId, callbackData);
+        } else {
+            revert("BucketApp: operationType is not supported");
+        }
+    }
+
     function _getCreateBucketPackage() internal view returns (BucketStorage.CreateBucketSynPackage memory) {
         bytes32 packageHash = createQueue.front();
         return createQueueMap[packageHash];

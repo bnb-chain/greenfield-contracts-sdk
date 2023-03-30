@@ -28,6 +28,25 @@ abstract contract ObjectApp is BaseApp {
         require(msg.sender == crossChain, "ObjectApp: caller is not the crossChain contract");
         require(channelId == OBJECT_CHANNEL_ID, "ObjectApp: channelId is not supported");
 
+        _objectGreenfieldCall(status, operationType, resourceId, callbackData);
+    }
+
+    /*----------------- external functions -----------------*/
+    function retryPackage(uint8) external override virtual onlyOperator {
+        IObjectHub(objectHub).retryPackage();
+    }
+
+    function skipPackage(uint8) external override virtual onlyOperator {
+        IObjectHub(objectHub).skipPackage();
+    }
+
+    /*----------------- internal functions -----------------*/
+    function _objectGreenfieldCall(        
+        uint32 status,
+        uint8 operationType,
+        uint256 resourceId,
+        bytes calldata callbackData
+    ) internal virtual {
         if (operationType == TYPE_DELETE) {
             _deleteObjectCallback(status, resourceId, callbackData);
         } else {
@@ -35,16 +54,6 @@ abstract contract ObjectApp is BaseApp {
         }
     }
 
-    /*----------------- external functions -----------------*/
-    function retryPackage() external override virtual onlyOperator {
-        IObjectHub(objectHub).retryPackage();
-    }
-
-    function skipPackage() external override virtual onlyOperator {
-        IObjectHub(objectHub).skipPackage();
-    }
-
-    /*----------------- internal functions -----------------*/
     function _deleteObject(uint256 _tokenId) internal {
         uint256 totalFee = _getTotalFee();
         IObjectHub(objectHub).deleteObject{value: totalFee}(_tokenId);
