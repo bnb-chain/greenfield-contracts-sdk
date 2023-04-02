@@ -7,7 +7,7 @@ import "./interface/IObjectHub.sol";
 
 abstract contract ObjectApp is BaseApp {
     /*----------------- constants -----------------*/
-    uint8 public constant OBJECT_CHANNEL_ID = 0x05;
+    uint8 public constant RESOURCE_OBJECT = 0x05;
 
     /*----------------- storage -----------------*/
     // system contract
@@ -18,30 +18,22 @@ abstract contract ObjectApp is BaseApp {
 
     // need initialize
 
+    /*----------------- external functions -----------------*/
     function greenfieldCall(
         uint32 status,
-        uint8 channelId,
+        uint8 resourceType,
         uint8 operationType,
         uint256 resourceId,
         bytes calldata callbackData
-    ) external override virtual {
-        require(msg.sender == crossChain, "ObjectApp: caller is not the crossChain contract");
-        require(channelId == OBJECT_CHANNEL_ID, "ObjectApp: channelId is not supported");
+    ) external virtual override {
+        require(msg.sender == crossChain, string.concat("ObjectApp: ", ERROR_INVALID_CALLER));
+        require(resourceType == RESOURCE_OBJECT, string.concat("ObjectApp: ", ERROR_INVALID_RESOURCE));
 
         _objectGreenfieldCall(status, operationType, resourceId, callbackData);
     }
 
-    /*----------------- external functions -----------------*/
-    function retryPackage(uint8) external override virtual onlyOperator {
-        IObjectHub(objectHub).retryPackage();
-    }
-
-    function skipPackage(uint8) external override virtual onlyOperator {
-        IObjectHub(objectHub).skipPackage();
-    }
-
     /*----------------- internal functions -----------------*/
-    function _objectGreenfieldCall(        
+    function _objectGreenfieldCall(
         uint32 status,
         uint8 operationType,
         uint256 resourceId,
@@ -50,13 +42,22 @@ abstract contract ObjectApp is BaseApp {
         if (operationType == TYPE_DELETE) {
             _deleteObjectCallback(status, resourceId, callbackData);
         } else {
-            revert("ObjectApp: operationType is not supported");
+            revert(string.concat("ObjectApp: ", ERROR_INVALID_OPERATION));
         }
+    }
+
+    function _retryObjectPackage() internal virtual {
+        IObjectHub(objectHub).retryPackage();
+    }
+
+    function _skipObjectPackage() internal virtual {
+        IObjectHub(objectHub).skipPackage();
     }
 
     function _deleteObject(uint256 _tokenId) internal {
         uint256 totalFee = _getTotalFee();
-        IObjectHub(objectHub).deleteObject{value: totalFee}(_tokenId);
+        require(msg.value >= totalFee, string.concat("ObjectApp: ", ERROR_INSUFFICIENT_VALUE));
+        IObjectHub(objectHub).deleteObject{value: msg.value}(_tokenId);
     }
 
     function _deleteObject(uint256 _tokenId, bytes memory _callbackData) internal {
@@ -68,7 +69,8 @@ abstract contract ObjectApp is BaseApp {
         });
 
         uint256 totalFee = _getTotalFee();
-        IObjectHub(objectHub).deleteObject{value: totalFee}(_tokenId, callbackGasLimit, _extraData);
+        require(msg.value >= totalFee, string.concat("ObjectApp: ", ERROR_INSUFFICIENT_VALUE));
+        IObjectHub(objectHub).deleteObject{value: msg.value}(_tokenId, callbackGasLimit, _extraData);
     }
 
     function _deleteObjectCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}

@@ -5,11 +5,6 @@ pragma solidity ^0.8.0;
 import "./CmnStorage.sol";
 
 contract BucketStorage is CmnStorage {
-    /*----------------- storage -----------------*/
-    // PlaceHolder reserve for future use
-    uint256[25] public BucketStorageSlots;
-
-    // BSC to GNFD
     struct CreateBucketSynPackage {
         address creator;
         string name;

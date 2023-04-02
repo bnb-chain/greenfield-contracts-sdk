@@ -2,14 +2,20 @@
 
 pragma solidity ^0.8.0;
 
-import "openzeppelin-contracts/access/Ownable.sol";
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
+import "openzeppelin-contracts/utils/Strings.sol";
 
 import "./storage/CmnStorage.sol";
 import "./interface/ICrossChain.sol";
 
-abstract contract BaseApp is Ownable, Initializable {
+abstract contract BaseApp is Initializable {
     /*----------------- constants -----------------*/
+    // error code
+    string public constant ERROR_INVALID_CALLER = "0";
+    string public constant ERROR_INVALID_RESOURCE = "1";
+    string public constant ERROR_INVALID_OPERATION = "2";
+    string public constant ERROR_INSUFFICIENT_VALUE = "3";
+
     // status of cross-chain package
     uint32 public constant STATUS_SUCCESS = 0;
     uint32 public constant STATUS_FAILED = 1;
@@ -20,8 +26,6 @@ abstract contract BaseApp is Ownable, Initializable {
     uint8 public constant TYPE_DELETE = 3;
 
     /*----------------- storage -----------------*/
-    mapping(address => bool) public operators;
-
     // system contract
     address public crossChain;
 
@@ -30,48 +34,32 @@ abstract contract BaseApp is Ownable, Initializable {
     address public refundAddress;
     CmnStorage.FailureHandleStrategy public failureHandleStrategy;
 
-    modifier onlyOperator() {
-        require(msg.sender == owner() || _isOperator(msg.sender), "caller is not the owner or operator");
-        _;
-    }
-
     // need initialize
 
+    /*----------------- external functions -----------------*/
     function greenfieldCall(
         uint32 status,
-        uint8 channelId,
+        uint8 resourceType,
         uint8 operationType,
         uint256 resourceId,
         bytes calldata callbackData
     ) external virtual {}
 
-    /*----------------- external functions -----------------*/
-    function retryPackage(uint8 channelId) external virtual onlyOperator {}
+    function retryPackage(uint8 resourceType) external virtual {}
 
-    function skipPackage(uint8 channelId) external virtual onlyOperator {}
-
-    /*----------------- settings -----------------*/
-    function addOperator(address newOperator) public onlyOwner {
-        operators[newOperator] = true;
-    }
-
-    function removeOperator(address operator) public onlyOwner {
-        delete operators[operator];
-    }
-
-    function setCallbackConfig(
-        uint256 _callbackGasLimit,
-        address _refundAddress,
-        CmnStorage.FailureHandleStrategy _failureHandleStrategy
-    ) public onlyOperator {
-        callbackGasLimit = _callbackGasLimit;
-        refundAddress = _refundAddress;
-        failureHandleStrategy = _failureHandleStrategy;
-    }
+    function skipPackage(uint8 resourceType) external virtual {}
 
     /*----------------- internal functions -----------------*/
-    function _isOperator(address account) internal view returns (bool) {
-        return operators[account];
+    function _setCallbackGasLimit(uint256 _callbackGasLimit) internal {
+        callbackGasLimit = _callbackGasLimit;
+    }
+
+    function _setRefundAddress(address _refundAddress) internal {
+        refundAddress = _refundAddress;
+    }
+
+    function _setFailureHandleStrategy(CmnStorage.FailureHandleStrategy _failureHandleStrategy) internal {
+        failureHandleStrategy = _failureHandleStrategy;
     }
 
     function _getTotalFee() internal returns (uint256) {

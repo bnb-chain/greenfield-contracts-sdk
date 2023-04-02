@@ -6,17 +6,12 @@ import "./BaseApp.sol";
 import "./interface/IBucketHub.sol";
 
 abstract contract BucketApp is BaseApp {
-    using DoubleEndedQueueUpgradeable for DoubleEndedQueueUpgradeable.Bytes32Deque;
-
     /*----------------- constants -----------------*/
-    uint8 public constant BUCKET_CHANNEL_ID = 0x04;
+    uint8 public constant RESOURCE_BUCKET = 0x04;
 
     /*----------------- storage -----------------*/
     address public bucketHub;
     address public paymentAddress;
-
-    DoubleEndedQueueUpgradeable.Bytes32Deque public createQueue;
-    mapping(bytes32 => BucketStorage.CreateBucketSynPackage) public createQueueMap;
 
     event CreateBucketSuccess(bytes bucketName, uint256 indexed tokenId);
     event CreateBucketFailed(uint32 status, bytes bucketName);
@@ -25,35 +20,22 @@ abstract contract BucketApp is BaseApp {
 
     // need initialize
 
+    /*----------------- external functions -----------------*/
     function greenfieldCall(
         uint32 status,
-        uint8 channelId,
+        uint8 resourceType,
         uint8 operationType,
         uint256 resourceId,
         bytes calldata callbackData
-    ) external override virtual {
-        require(msg.sender == crossChain, "BucketApp: caller is not the crossChain contract");
-        require(channelId == BUCKET_CHANNEL_ID, "BucketApp: channelId is not supported");
+    ) external virtual override {
+        require(msg.sender == crossChain, string.concat("BucketApp: ", ERROR_INVALID_CALLER));
+        require(resourceType == RESOURCE_BUCKET, string.concat("BucketApp: ", ERROR_INVALID_RESOURCE));
 
         _bucketGreenfieldCall(status, operationType, resourceId, callbackData);
     }
 
-    /*----------------- external functions -----------------*/
-    function retryPackage(uint8) external override virtual onlyOperator {
-        IBucketHub(bucketHub).retryPackage();
-    }
-
-    function skipPackage(uint8) external override virtual onlyOperator {
-        IBucketHub(bucketHub).skipPackage();
-    }
-
-    /*----------------- settings -----------------*/
-    function setPaymentAddress(address _paymentAddress) public onlyOperator {
-        paymentAddress = _paymentAddress;
-    }
-
     /*----------------- internal functions -----------------*/
-    function _bucketGreenfieldCall(        
+    function _bucketGreenfieldCall(
         uint32 status,
         uint8 operationType,
         uint256 resourceId,
@@ -64,39 +46,69 @@ abstract contract BucketApp is BaseApp {
         } else if (operationType == TYPE_DELETE) {
             _deleteBucketCallback(status, resourceId, callbackData);
         } else {
-            revert("BucketApp: operationType is not supported");
+            revert(string.concat("BucketApp: ", ERROR_INVALID_OPERATION));
         }
     }
 
-    function _getCreateBucketPackage() internal view returns (BucketStorage.CreateBucketSynPackage memory) {
-        bytes32 packageHash = createQueue.front();
-        return createQueueMap[packageHash];
+    function _retryBucketPackage() internal virtual {
+        IBucketHub(bucketHub).retryPackage();
     }
 
-    function _sendCreateBucketPacakge(
+    function _skipBucketPackage() internal virtual {
+        IBucketHub(bucketHub).skipPackage();
+    }
+
+    function _setPaymentAddress(address _paymentAddress) internal {
+        paymentAddress = _paymentAddress;
+    }
+
+    function _createBucket(
+        address _creator,
+        string memory _name,
+        BucketStorage.BucketVisibilityType _visibility,
+        uint64 _chargedReadQuota,
         address _spAddress,
         uint256 _expireHeight,
         bytes calldata _sig
     ) internal {
-        BucketStorage.CreateBucketSynPackage memory createPkg = _getCreateBucketPackage();
-        createPkg.primarySpAddress = _spAddress;
-        createPkg.primarySpApprovalExpiredHeight = _expireHeight;
-        createPkg.primarySpSignature = _sig;
+        BucketStorage.CreateBucketSynPackage memory createPkg = BucketStorage.CreateBucketSynPackage({
+            creator: _creator,
+            name: _name,
+            visibility: _visibility,
+            paymentAddress: paymentAddress,
+            primarySpAddress: _spAddress,
+            primarySpApprovalExpiredHeight: _expireHeight,
+            primarySpSignature: _sig,
+            chargedReadQuota: _chargedReadQuota,
+            extraData: ""
+        });
 
         uint256 totalFee = _getTotalFee();
-        IBucketHub(bucketHub).createBucket{value: totalFee}(createPkg);
+        require(msg.value >= totalFee, string.concat("BucketApp: ", ERROR_INSUFFICIENT_VALUE));
+        IBucketHub(bucketHub).createBucket{value: msg.value}(createPkg);
     }
 
-    function _sendCreateBucketPacakge(
+    function _createBucket(
+        address _creator,
+        string memory _name,
+        BucketStorage.BucketVisibilityType _visibility,
+        uint64 _chargedReadQuota,
         address _spAddress,
         uint256 _expireHeight,
         bytes calldata _sig,
         bytes memory _callbackData
     ) internal {
-        BucketStorage.CreateBucketSynPackage memory createPkg = _getCreateBucketPackage();
-        createPkg.primarySpAddress = _spAddress;
-        createPkg.primarySpApprovalExpiredHeight = _expireHeight;
-        createPkg.primarySpSignature = _sig;
+        BucketStorage.CreateBucketSynPackage memory createPkg = BucketStorage.CreateBucketSynPackage({
+            creator: _creator,
+            name: _name,
+            visibility: _visibility,
+            paymentAddress: paymentAddress,
+            primarySpAddress: _spAddress,
+            primarySpApprovalExpiredHeight: _expireHeight,
+            primarySpSignature: _sig,
+            chargedReadQuota: _chargedReadQuota,
+            extraData: ""
+        });
 
         CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
@@ -106,12 +118,14 @@ abstract contract BucketApp is BaseApp {
         });
 
         uint256 totalFee = _getTotalFee();
-        IBucketHub(bucketHub).createBucket{value: totalFee}(createPkg, callbackGasLimit, _extraData);
+        require(msg.value >= totalFee, string.concat("BucketApp: ", ERROR_INSUFFICIENT_VALUE));
+        IBucketHub(bucketHub).createBucket{value: msg.value}(createPkg, callbackGasLimit, _extraData);
     }
 
     function _deleteBucket(uint256 _tokenId) internal {
         uint256 totalFee = _getTotalFee();
-        IBucketHub(bucketHub).deleteBucket{value: totalFee}(_tokenId);
+        require(msg.value >= totalFee, string.concat("BucketApp: ", ERROR_INSUFFICIENT_VALUE));
+        IBucketHub(bucketHub).deleteBucket{value: msg.value}(_tokenId);
     }
 
     function _deleteBucket(uint256 _tokenId, bytes memory _callbackData) internal {
@@ -123,7 +137,8 @@ abstract contract BucketApp is BaseApp {
         });
 
         uint256 totalFee = _getTotalFee();
-        IBucketHub(bucketHub).deleteBucket{value: totalFee}(_tokenId, callbackGasLimit, _extraData);
+        require(msg.value >= totalFee, string.concat("BucketApp: ", ERROR_INSUFFICIENT_VALUE));
+        IBucketHub(bucketHub).deleteBucket{value: msg.value}(_tokenId, callbackGasLimit, _extraData);
     }
 
     function _createBucketCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}
