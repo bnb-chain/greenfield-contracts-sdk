@@ -12,7 +12,7 @@ contract BucketStorage is CmnStorage {
         address paymentAddress;
         address primarySpAddress;
         uint256 primarySpApprovalExpiredHeight;
-        bytes primarySpSignature; // TODO if the owner of the bucket is a smart contract, we are not able to get the primarySpSignature
+        bytes primarySpSignature;
         uint64 chargedReadQuota;
         bytes extraData; // rlp encode of ExtraData
     }

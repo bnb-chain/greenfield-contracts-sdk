@@ -27,8 +27,6 @@ abstract contract GroupApp is BaseApp {
     event UpdateGroupSuccess(uint256 indexed tokenId);
     event UpdateGroupFailed(uint32 status, uint256 indexed tokenId);
 
-    // need initialize
-
     /*----------------- external functions -----------------*/
     function greenfieldCall(
         uint32 status,
@@ -107,7 +105,12 @@ abstract contract GroupApp is BaseApp {
         IGroupHub(groupHub).deleteGroup{value: msg.value}(_tokenId, callbackGasLimit, _extraData);
     }
 
-    function _updateGroup(address _owner, uint256 _tokenId, uint8 _opType, address[] memory _members) internal {
+    function _updateGroup(
+        address _owner,
+        uint256 _tokenId,
+        GroupStorage.UpdateGroupOpType _opType,
+        address[] memory _members
+    ) internal {
         GroupStorage.UpdateGroupSynPackage memory updatePkg = GroupStorage.UpdateGroupSynPackage({
             operator: _owner,
             id: _tokenId,
@@ -124,7 +127,7 @@ abstract contract GroupApp is BaseApp {
     function _updateGroup(
         address _owner,
         uint256 _tokenId,
-        uint8 _opType,
+        GroupStorage.UpdateGroupOpType _opType,
         address[] memory _members,
         bytes memory _callbackData
     ) internal {

@@ -18,8 +18,6 @@ abstract contract BucketApp is BaseApp {
     event DeleteBucketSuccess(uint256 indexed tokenId);
     event DeleteBucketFailed(uint32 status, uint256 indexed tokenId);
 
-    // need initialize
-
     /*----------------- external functions -----------------*/
     function greenfieldCall(
         uint32 status,

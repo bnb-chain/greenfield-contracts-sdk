@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../BucketApp.sol";
 import "../ObjectApp.sol";
 import "../GroupApp.sol";
+import "../interface/IERC1155.sol";
 import "../interface/IERC721Nontransferable.sol";
 import "../interface/IERC1155Nontransferable.sol";
 
@@ -12,10 +13,17 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
     /*----------------- constants -----------------*/
     string public constant ERROR_INVALID_NAME = "4";
     string public constant ERROR_RESOURCE_EXISTED = "5";
+    string public constant ERROR_INVALID_PRICE = "6";
+    string public constant ERROR_GROUP_NOT_EXISTED = "7";
+    string public constant ERROR_EBOOK_NOT_ONSHELF = "8";
+    string public constant ERROR_NOT_ENOUGH_VALUE = "9";
 
     /*----------------- storage -----------------*/
     address public owner;
     mapping(address => bool) public operators;
+
+    // ERC1155 for onshelf ebook
+    address public ebookToken;
 
     // system contract
     address public bucketToken;
@@ -23,22 +31,29 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
     address public groupToken;
     address public memberToken;
 
-    // A series is a bucket which can include many ebooks
-    // A ebook is an object
+    // A series is a bucket which can include many e-books
+    // A e-book is an object
     // tokenId => series name
     mapping(uint256 => string) public seriesName;
     // series name => tokenId
     mapping(string => uint256) public seriesId;
 
     // tokenId => Ebook name
-    mapping(uint256 => string) public eBookName;
+    mapping(uint256 => string) public ebookName;
     // Ebook name => tokenId
-    mapping(string => uint256) public eBookId;
+    mapping(string => uint256) public ebookId;
+    // Ebook id => group id
+    mapping(uint256 => uint256) public ebookGroup;
 
     // tokenId => group name
     mapping(uint256 => string) public groupName;
     // group name => tokenId
     mapping(string => uint256) public groupId;
+    // group id => Ebook id
+    mapping(uint256 => uint256) public groupEbook;
+
+    // ebookId => price
+    mapping(uint256 => uint256) public ebookPrice;
 
     // PlaceHolder reserve for future use
     uint256[25] public EbookShopSlots;
@@ -61,6 +76,7 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         address _bucketHub,
         address _objectHub,
         address _groupHub,
+        address _ebookToken,
         address _paymentAddress,
         address _refundAddress,
         uint256 _callbackGasLimit,
@@ -73,6 +89,7 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         bucketHub = _bucketHub;
         objectHub = _objectHub;
         groupHub = _groupHub;
+        ebookToken = _ebookToken;
 
         bucketToken = IBucketHub(_bucketHub).ERC721Token();
         objectToken = IObjectHub(_objectHub).ERC721Token();
@@ -107,12 +124,69 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
     }
 
     // TODO assume sp provider's info will be provided by front-end
-    function createSeries(string calldata name, BucketStorage.BucketVisibilityType visibility, uint64 chargedReadQuota, address spAddress,
-        uint256 expireHeight, bytes calldata sig) external {
+    function createSeries(
+        string calldata name,
+        BucketStorage.BucketVisibilityType visibility,
+        uint64 chargedReadQuota,
+        address spAddress,
+        uint256 expireHeight,
+        bytes calldata sig
+    ) external payable {
+        require(bytes(name).length > 0, string.concat("EbookShop: ", ERROR_INVALID_NAME));
         require(seriesId[name] == 0, string.concat("EbookShop: ", ERROR_RESOURCE_EXISTED));
 
         bytes memory _callbackData = bytes(name); // use name as callback data
         _createBucket(msg.sender, name, visibility, chargedReadQuota, spAddress, expireHeight, sig, _callbackData);
+    }
+
+    function createGroup(uint256 _ebookId) public payable {
+        require(
+            IERC721NonTransferable(objectToken).ownerOf(_ebookId) == msg.sender,
+            string.concat("EbookShop: ", ERROR_INVALID_CALLER)
+        );
+
+        string memory name = string.concat("Group for ", ebookName[_ebookId]);
+        require(groupId[name] == 0, string.concat("EbookShop: ", ERROR_RESOURCE_EXISTED));
+
+        bytes memory _callbackData = bytes(name); // use name as callback data
+        _createGroup(msg.sender, name, _callbackData);
+    }
+
+    function publishEbook(uint256 _ebookId, uint256 price) external {
+        require(
+            IERC721NonTransferable(objectToken).ownerOf(_ebookId) == msg.sender,
+            string.concat("EbookShop: ", ERROR_INVALID_CALLER)
+        );
+        require(ebookGroup[_ebookId] != 0, string.concat("EbookShop: ", ERROR_GROUP_NOT_EXISTED));
+        require(price > 0, string.concat("EbookShop: ", ERROR_INVALID_PRICE));
+
+        ebookPrice[_ebookId] = price;
+        IERC1155(ebookToken).mint(msg.sender, _ebookId, 1, "");
+    }
+
+    function buyEbook(uint256 _ebookId) external payable {
+        require(ebookPrice[_ebookId] > 0, string.concat("EbookShop: ", ERROR_EBOOK_NOT_ONSHELF));
+
+        uint256 price = ebookPrice[_ebookId];
+        require(msg.value >= price, string.concat("EbookShop: ", ERROR_NOT_ENOUGH_VALUE));
+
+        IERC1155(ebookToken).mint(msg.sender, _ebookId, 1, "");
+
+        uint256 _groupId = ebookGroup[_ebookId];
+        address _owner = IERC721NonTransferable(groupToken).ownerOf(_groupId);
+        address[] memory _member = new address[](1);
+        _member[0] = msg.sender;
+        _updateGroup(_owner, _groupId, GroupStorage.UpdateGroupOpType.AddMembers, _member);
+    }
+
+    function downshelfEbook(uint256 _ebookId) external {
+        require(
+            IERC721NonTransferable(objectToken).ownerOf(_ebookId) == msg.sender,
+            string.concat("EbookShop: ", ERROR_INVALID_CALLER)
+        );
+        require(ebookPrice[_ebookId] > 0, string.concat("EbookShop: ", ERROR_EBOOK_NOT_ONSHELF));
+
+        ebookPrice[_ebookId] = 0;
     }
 
     // register resource that mirrored from GreenField to BSC
@@ -128,16 +202,35 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         seriesId[name] = tokenId;
     }
 
-    function registerEbook(string calldata name, uint256 tokenId) external {
+    function registerEbook(
+        string calldata _ebookName,
+        uint256 _ebookId,
+        string calldata _groupName,
+        uint256 _groupId
+    ) external {
         require(
-            IERC721NonTransferable(objectToken).ownerOf(tokenId) == msg.sender,
+            IERC721NonTransferable(objectToken).ownerOf(_ebookId) == msg.sender,
             string.concat("EbookShop: ", ERROR_INVALID_CALLER)
         );
-        require(bytes(name).length > 0, string.concat("EbookShop: ", ERROR_INVALID_NAME));
-        require(eBookId[name] == 0, string.concat("EbookShop: ", ERROR_RESOURCE_EXISTED));
+        require(bytes(_ebookName).length > 0, string.concat("EbookShop: ", ERROR_INVALID_NAME));
+        require(ebookId[_ebookName] == 0, string.concat("EbookShop: ", ERROR_RESOURCE_EXISTED));
 
-        eBookName[tokenId] = name;
-        eBookId[name] = tokenId;
+        ebookName[_ebookId] = _ebookName;
+        ebookId[_ebookName] = _ebookId;
+
+        if (_groupId != 0) {
+            require(
+                IERC721NonTransferable(groupToken).ownerOf(_groupId) == msg.sender,
+                string.concat("EbookShop: ", ERROR_INVALID_CALLER)
+            );
+            require(bytes(_groupName).length > 0, string.concat("EbookShop: ", ERROR_INVALID_NAME));
+
+            groupName[_groupId] = _groupName;
+            groupId[_groupName] = _groupId;
+
+            groupEbook[_groupId] = _ebookId;
+            ebookGroup[_ebookId] = _groupId;
+        }
     }
 
     function registerGroup(string calldata name, uint256 tokenId) external {
@@ -188,22 +281,6 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         } else {
             revert(string.concat("EbookShop: ", ERROR_INVALID_RESOURCE));
         }
-    }
-
-    function createSeries(
-        address _creator,
-        string memory _name,
-        BucketStorage.BucketVisibilityType _visibility,
-        uint64 _chargedReadQuota,
-        address _spAddress,
-        uint256 _expireHeight,
-        bytes calldata _sig
-    ) external payable onlyOperator {
-        require(bytes(_name).length > 0, string.concat("EbookShop: ", ERROR_INVALID_NAME));
-        require(seriesId[_name] == 0, string.concat("EbookShop: ", ERROR_RESOURCE_EXISTED));
-
-        bytes memory _callbackData = bytes(_name); // we will use this to identify the resource in callback
-        _createBucket(_creator, _name, _visibility, _chargedReadQuota, _spAddress, _expireHeight, _sig, _callbackData);
     }
 
     /*----------------- internal functions -----------------*/

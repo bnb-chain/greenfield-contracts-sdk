@@ -11,8 +11,8 @@ contract CmnStorage {
     }
 
     enum FailureHandleStrategy {
-        BlockOnFail, // If a package fails, the subsequent SYN packages will be blocked until the failed ACK packages are handled in the order they were received.
-        CacheOnFail, // When a package fails, it is cached for later handling. New SYN packages will continue to be handled normally.
-        SkipOnFail // Failed ACK packages are ignored and will not affect subsequent SYN packages.
+        BlockOnFail, // If a package fails, the dApp cannot send new ross-chain txs until the failed packages are handled in the order they were received.
+        CacheOnFail, // When a package fails, it is cached for later handling. New cross-chain txs are still allowed to be sent.
+        SkipOnFail // Failed packages are ignored and will not affect subsequent ross-chain txs.
     }
 }

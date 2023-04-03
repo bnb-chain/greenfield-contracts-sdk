@@ -34,8 +34,6 @@ abstract contract BaseApp is Initializable {
     address public refundAddress;
     CmnStorage.FailureHandleStrategy public failureHandleStrategy;
 
-    // need initialize
-
     /*----------------- external functions -----------------*/
     function greenfieldCall(
         uint32 status,
