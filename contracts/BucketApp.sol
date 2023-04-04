@@ -5,12 +5,20 @@ pragma solidity ^0.8.0;
 import "./BaseApp.sol";
 import "./interface/IBucketHub.sol";
 
+/**
+ * @dev Contract module that allows children to interact with the
+ * BucketHub easily.
+ */
 abstract contract BucketApp is BaseApp {
     /*----------------- constants -----------------*/
+    // Bucket's resource code
     uint8 public constant RESOURCE_BUCKET = 0x04;
 
     /*----------------- storage -----------------*/
+    // system contract
     address public bucketHub;
+
+    // payment address for resource creation
     address public paymentAddress;
 
     event CreateBucketSuccess(bytes bucketName, uint256 indexed tokenId);
@@ -18,7 +26,32 @@ abstract contract BucketApp is BaseApp {
     event DeleteBucketSuccess(uint256 indexed tokenId);
     event DeleteBucketFailed(uint32 status, uint256 indexed tokenId);
 
+    /*----------------- initializer -----------------*/
+    /**
+     * @dev Sets the values for {crossChain}, {callbackGasLimit}, {refundAddress}, {failureHandleStrategy},
+     * {bucketHub} and {paymentAddress}.
+     */
+    function __bucket_app_init(
+        address _crossChain,
+        uint256 _callbackGasLimit,
+        address _refundAddress,
+        uint8 _failureHandlerStrategy,
+        address _bucketHub,
+        address _paymentAddress
+    ) internal onlyInitializing {
+        __base_app_init_unchained(_crossChain, _callbackGasLimit, _refundAddress, _failureHandlerStrategy);
+        __bucket_app_init_unchained(_bucketHub, _paymentAddress);
+    }
+
+    function __bucket_app_init_unchained(address _bucketHub, address _paymentAddress) internal onlyInitializing {
+        bucketHub = _bucketHub;
+        paymentAddress = _paymentAddress;
+    }
+
     /*----------------- external functions -----------------*/
+    /**
+     * @dev See {BaseApp-greenfieldCall}
+     */
     function greenfieldCall(
         uint32 status,
         uint8 resourceType,
@@ -33,6 +66,10 @@ abstract contract BucketApp is BaseApp {
     }
 
     /*----------------- internal functions -----------------*/
+    /**
+     * @dev Callback router for bucket resource.
+     * It will call the corresponding callback function according to the operation type.
+     */
     function _bucketGreenfieldCall(
         uint32 status,
         uint8 operationType,
@@ -48,18 +85,33 @@ abstract contract BucketApp is BaseApp {
         }
     }
 
+    /**
+     * @dev Retry the first failed package of this app address in the BucketHub's queue.
+     */
     function _retryBucketPackage() internal virtual {
         IBucketHub(bucketHub).retryPackage();
     }
 
+    /**
+     * @dev Skip the first failed package of this app address in the BucketHub's queue.
+     */
     function _skipBucketPackage() internal virtual {
         IBucketHub(bucketHub).skipPackage();
     }
 
+    /**
+     * @dev Set `paymentAddress`.
+     */
     function _setPaymentAddress(address _paymentAddress) internal {
         paymentAddress = _paymentAddress;
     }
 
+    /**
+     * @dev Assemble a `BucketStorage.CreateBucketSynPackage` from provided elements
+     * and send the transaction to BucketHub.
+     * 
+     * This function is used for the case that the caller does not need to receive the callback.
+     */
     function _createBucket(
         address _creator,
         string memory _name,
@@ -86,6 +138,12 @@ abstract contract BucketApp is BaseApp {
         IBucketHub(bucketHub).createBucket{value: msg.value}(createPkg);
     }
 
+    /**
+     * @dev Assemble a `BucketStorage.CreateBucketSynPackage` from provided elements
+     * and send the transaction to BucketHub.
+     * 
+     * This function is used for the case that the caller needs to receive the callback.
+     */
     function _createBucket(
         address _creator,
         string memory _name,
@@ -120,12 +178,22 @@ abstract contract BucketApp is BaseApp {
         IBucketHub(bucketHub).createBucket{value: msg.value}(createPkg, callbackGasLimit, _extraData);
     }
 
+    /**
+     * @dev Send the `deleteBucket` transaction to BucketHub.
+     * 
+     * This function is used for the case that the caller does not need to receive the callback.
+     */
     function _deleteBucket(uint256 _tokenId) internal {
         uint256 totalFee = _getTotalFee();
         require(msg.value >= totalFee, string.concat("BucketApp: ", ERROR_INSUFFICIENT_VALUE));
         IBucketHub(bucketHub).deleteBucket{value: msg.value}(_tokenId);
     }
 
+    /**
+     * @dev Send the `deleteBucket` transaction to BucketHub.
+     * 
+     * This function is used for the case that the caller needs to receive the callback.
+     */
     function _deleteBucket(uint256 _tokenId, bytes memory _callbackData) internal {
         CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
@@ -139,7 +207,13 @@ abstract contract BucketApp is BaseApp {
         IBucketHub(bucketHub).deleteBucket{value: msg.value}(_tokenId, callbackGasLimit, _extraData);
     }
 
+    /**
+     * @dev Handler for `createBucket`'s callback.
+     */
     function _createBucketCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}
 
+    /**
+     * @dev Handler for `deleteBucket`'s callback.
+     */
     function _deleteBucketCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}
 }

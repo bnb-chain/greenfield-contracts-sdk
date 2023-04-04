@@ -2,7 +2,13 @@
 
 pragma solidity ^0.8.0;
 
+/**
+ * @dev Necessary common data structures.
+ */
 contract CmnStorage {
+    /**
+     * @dev The data structure for callback.
+     */
     struct ExtraData {
         address appAddress;
         address refundAddress;

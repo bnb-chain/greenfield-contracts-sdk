@@ -78,28 +78,23 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         address _groupHub,
         address _ebookToken,
         address _paymentAddress,
-        address _refundAddress,
         uint256 _callbackGasLimit,
-        CmnStorage.FailureHandleStrategy _failureHandleStrategy
+        address _refundAddress,
+        uint8 _failureHandleStrategy
     ) public initializer {
         require(_owner != address(0), string.concat("EbookShop: ", ERROR_INVALID_CALLER));
         _transferOwnership(_owner);
 
-        crossChain = _crossChain;
-        bucketHub = _bucketHub;
-        objectHub = _objectHub;
-        groupHub = _groupHub;
         ebookToken = _ebookToken;
-
         bucketToken = IBucketHub(_bucketHub).ERC721Token();
         objectToken = IObjectHub(_objectHub).ERC721Token();
         groupToken = IGroupHub(_groupHub).ERC721Token();
         memberToken = IGroupHub(_groupHub).ERC1155Token();
 
-        paymentAddress = _paymentAddress;
-        refundAddress = _refundAddress;
-        callbackGasLimit = _callbackGasLimit;
-        failureHandleStrategy = _failureHandleStrategy;
+        __base_app_init_unchained(_crossChain, _callbackGasLimit, _refundAddress, _failureHandleStrategy);
+        __bucket_app_init_unchained(_bucketHub, _paymentAddress);
+        __group_app_init_unchained(_groupHub);
+        __object_app_init_unchained(_objectHub);
     }
 
     /*----------------- external functions -----------------*/

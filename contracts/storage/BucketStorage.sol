@@ -4,7 +4,13 @@ pragma solidity ^0.8.0;
 
 import "./CmnStorage.sol";
 
+/**
+ * @dev Necessary data structures for BucketApp.
+ */
 contract BucketStorage is CmnStorage {
+    /**
+     * @dev The data structure of the package for creating a bucket.
+     */
     struct CreateBucketSynPackage {
         address creator;
         string name;
@@ -14,7 +20,7 @@ contract BucketStorage is CmnStorage {
         uint256 primarySpApprovalExpiredHeight;
         bytes primarySpSignature;
         uint64 chargedReadQuota;
-        bytes extraData; // rlp encode of ExtraData
+        bytes extraData;
     }
 
     enum BucketVisibilityType {

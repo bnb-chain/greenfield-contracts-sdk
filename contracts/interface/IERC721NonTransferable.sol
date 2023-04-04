@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 
 /**
  * @dev External interface of ERC721NonTransferable declared to support ERC165 detection.
+ *
+ * This Non-Fungible Token doesn't support token transfer or approval.
  */
 interface IERC721NonTransferable {
     /**

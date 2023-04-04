@@ -16,7 +16,29 @@ abstract contract ObjectApp is BaseApp {
     event DeleteObjectSuccess(uint256 indexed tokenId);
     event DeleteObjectFailed(uint32 status, uint256 indexed tokenId);
 
+    /*----------------- initializer -----------------*/
+    /**
+     * @dev Sets the values for {crossChain}, {callbackGasLimit}, {refundAddress}, {failureHandleStrategy} and {objectHub}.
+     */
+    function __object_app_init(
+        address _crossChain,
+        uint256 _callbackGasLimit,
+        address _refundAddress,
+        uint8 _failureHandlerStrategy,
+        address _objectHub
+    ) internal onlyInitializing {
+        __base_app_init_unchained(_crossChain, _callbackGasLimit, _refundAddress, _failureHandlerStrategy);
+        __object_app_init_unchained(_objectHub);
+    }
+
+    function __object_app_init_unchained(address _objectHub) internal onlyInitializing {
+        objectHub = _objectHub;
+    }
+
     /*----------------- external functions -----------------*/
+    /**
+     * @dev see {BaseApp-greenfieldCall}
+     */
     function greenfieldCall(
         uint32 status,
         uint8 resourceType,
@@ -31,6 +53,10 @@ abstract contract ObjectApp is BaseApp {
     }
 
     /*----------------- internal functions -----------------*/
+    /**
+     * @dev Callback router for object resource.
+     * It will call the corresponding callback function according to the operation type.
+     */
     function _objectGreenfieldCall(
         uint32 status,
         uint8 operationType,
@@ -44,20 +70,36 @@ abstract contract ObjectApp is BaseApp {
         }
     }
 
+    /**
+     * @dev Retry the first failed package of this app address in the ObejctHub's queue.
+     */
     function _retryObjectPackage() internal virtual {
         IObjectHub(objectHub).retryPackage();
     }
 
+    /**
+     * @dev Skip the first failed package of this app address in the ObejctHub's queue.
+     */
     function _skipObjectPackage() internal virtual {
         IObjectHub(objectHub).skipPackage();
     }
 
+    /**
+     * @dev Send the `deleteObject` transaction to ObjectHub.
+     * 
+     * This function is used for the case that the caller does not need to receive the callback.
+     */
     function _deleteObject(uint256 _tokenId) internal {
         uint256 totalFee = _getTotalFee();
         require(msg.value >= totalFee, string.concat("ObjectApp: ", ERROR_INSUFFICIENT_VALUE));
         IObjectHub(objectHub).deleteObject{value: msg.value}(_tokenId);
     }
 
+    /**
+     * @dev Send the `deleteObject` transaction to ObjectHub.
+     * 
+     * This function is used for the case that the caller needs to receive the callback.
+     */
     function _deleteObject(uint256 _tokenId, bytes memory _callbackData) internal {
         CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
@@ -71,5 +113,8 @@ abstract contract ObjectApp is BaseApp {
         IObjectHub(objectHub).deleteObject{value: msg.value}(_tokenId, callbackGasLimit, _extraData);
     }
 
+    /**
+     * @dev Handler for `updateGroup`'s callback.
+     */
     function _deleteObjectCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}
 }
