@@ -14,13 +14,8 @@ contract GroupStorage is CmnStorage {
     struct UpdateGroupSynPackage {
         address operator;
         uint256 id; // group id
-        UpdateGroupOpType opType;
+        uint8 opType; // add/remove members
         address[] members;
         bytes extraData; // rlp encode of ExtraData
-    }
-
-    enum UpdateGroupOpType {
-        AddMembers,
-        RemoveMembers
     }
 }

@@ -24,9 +24,8 @@ contract BucketStorage is CmnStorage {
     }
 
     enum BucketVisibilityType {
-        Unspecified,
         PublicRead,
         Private,
-        Inherit // If the bucket Visibility is inherit, it's finally set to private.
+        Default // If the bucket Visibility is default, it's finally set to private.
     }
 }

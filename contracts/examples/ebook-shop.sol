@@ -171,7 +171,7 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         address _owner = IERC721NonTransferable(groupToken).ownerOf(_groupId);
         address[] memory _member = new address[](1);
         _member[0] = msg.sender;
-        _updateGroup(_owner, _groupId, GroupStorage.UpdateGroupOpType.AddMembers, _member);
+        _updateGroup(_owner, _groupId, UPDATE_ADD, _member);
     }
 
     function downshelfEbook(uint256 _ebookId) external {
