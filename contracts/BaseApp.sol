@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
-import "openzeppelin-contracts/utils/Strings.sol";
 
 import "./storage/CmnStorage.sol";
 import "./interface/ICrossChain.sol";
