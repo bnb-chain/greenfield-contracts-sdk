@@ -10,7 +10,7 @@ $ npm install @bnb-chain/greenfield-contracts-sdk
 ```
 
 Alternatively, you can obtain the contracts directly from the [GitHub repository](https://github.com/bnb-chain/greenfield-contracts-sdk). 
-When doing so, ensure that you specify the appropriate release, such as `v1.0.0`, instead of using the `master` branch.
+When doing so, ensure that you specify the appropriate release, such as `v1.0.0`, instead of using the `main` branch.
 
 ### Usage
 
