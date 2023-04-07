@@ -21,7 +21,11 @@ interface IObjectHub {
     /**
      * @dev send create object cross-chain transaction with callback data
      */
-    function deleteObject(uint256 tokenId, uint256 callbackGasLimit, CmnStorage.ExtraData memory extraData) external payable returns (bool);
+    function deleteObject(
+        uint256 tokenId,
+        uint256 callbackGasLimit,
+        CmnStorage.ExtraData memory extraData
+    ) external payable returns (bool);
 
     /**
      * @dev to see if an `account` has specific `role` of `granter`
@@ -34,7 +38,7 @@ interface IObjectHub {
     function grant(address account, uint32 authCode, uint256 expireTime) external;
 
     /**
-     * @dev revoke an `account` with specific role 
+     * @dev revoke an `account` with specific role
      */
     function revoke(address account, uint32 authCode) external;
 

@@ -41,7 +41,11 @@ interface IGroupHub {
     /**
      * @dev send delete group cross-chain transaction with callback data
      */
-    function deleteGroup(uint256 tokenId, uint256 callbackGasLimit, CmnStorage.ExtraData memory extraData) external payable returns (bool);
+    function deleteGroup(
+        uint256 tokenId,
+        uint256 callbackGasLimit,
+        CmnStorage.ExtraData memory extraData
+    ) external payable returns (bool);
 
     /**
      * @dev send update group cross-chain transaction
@@ -68,7 +72,7 @@ interface IGroupHub {
     function grant(address account, uint32 authCode, uint256 expireTime) external;
 
     /**
-     * @dev revoke an `account` with specific role 
+     * @dev revoke an `account` with specific role
      */
     function revoke(address account, uint32 authCode) external;
 

@@ -109,7 +109,7 @@ abstract contract BucketApp is BaseApp {
     /**
      * @dev Assemble a `BucketStorage.CreateBucketSynPackage` from provided elements
      * and send the transaction to BucketHub.
-     * 
+     *
      * This function is used for the case that the caller does not need to receive the callback.
      */
     function _createBucket(
@@ -141,7 +141,7 @@ abstract contract BucketApp is BaseApp {
     /**
      * @dev Assemble a `BucketStorage.CreateBucketSynPackage` from provided elements
      * and send the transaction to BucketHub.
-     * 
+     *
      * This function is used for the case that the caller needs to receive the callback.
      */
     function _createBucket(
@@ -180,7 +180,7 @@ abstract contract BucketApp is BaseApp {
 
     /**
      * @dev Send the `deleteBucket` transaction to BucketHub.
-     * 
+     *
      * This function is used for the case that the caller does not need to receive the callback.
      */
     function _deleteBucket(uint256 _tokenId) internal {
@@ -191,7 +191,7 @@ abstract contract BucketApp is BaseApp {
 
     /**
      * @dev Send the `deleteBucket` transaction to BucketHub.
-     * 
+     *
      * This function is used for the case that the caller needs to receive the callback.
      */
     function _deleteBucket(uint256 _tokenId, bytes memory _callbackData) internal {

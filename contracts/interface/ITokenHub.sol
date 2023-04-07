@@ -8,7 +8,7 @@ pragma solidity ^0.8.0;
 interface ITokenHub {
     /**
      * @dev transfer BNB from bsc to greenfield
-     */ 
+     */
     function transferOut(
         address contractAddr,
         address recipient,

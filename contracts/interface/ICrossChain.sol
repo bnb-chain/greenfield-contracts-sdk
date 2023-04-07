@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
  */
 interface ICrossChain {
     /**
-     * @dev get relayFee and minAckRelayFee. 
+     * @dev get relayFee and minAckRelayFee.
      * They are the basic fees required for sending cross-chain transactions
      */
     function getRelayFees() external returns (uint256 relayFee, uint256 minAckRelayFee);

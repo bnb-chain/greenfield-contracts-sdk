@@ -9,20 +9,36 @@ import "../interface/IERC1155.sol";
 import "../interface/IERC721Nontransferable.sol";
 import "../interface/IERC1155Nontransferable.sol";
 
+/**
+ * @dev An example of a simple ebook shop
+ *
+ * A `series` is a `bucket` resource and an `ebook` is an `object` resource
+ * An ebook must be put into a series
+ * A series can contain multiple ebooks
+ * Anyone must create a series before creating an ebook
+ *
+ * And an ebook should be bonding to a group
+ * Only members of the group can get the ebook
+ *
+ */
 contract EbookShop is BucketApp, ObjectApp, GroupApp {
     /*----------------- constants -----------------*/
+    // error code
+    // 0-3: defined in `baseApp`
     string public constant ERROR_INVALID_NAME = "4";
     string public constant ERROR_RESOURCE_EXISTED = "5";
     string public constant ERROR_INVALID_PRICE = "6";
     string public constant ERROR_GROUP_NOT_EXISTED = "7";
     string public constant ERROR_EBOOK_NOT_ONSHELF = "8";
     string public constant ERROR_NOT_ENOUGH_VALUE = "9";
+    string public constant ERROR_INVALID_TAX = "10";
 
     /*----------------- storage -----------------*/
+    // admins
     address public owner;
     mapping(address => bool) public operators;
 
-    // ERC1155 for onshelf ebook
+    // ERC1155 token for onshelf ebook
     address public ebookToken;
 
     // system contract
@@ -31,8 +47,6 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
     address public groupToken;
     address public memberToken;
 
-    // A series is a bucket which can include many e-books
-    // A e-book is an object
     // tokenId => series name
     mapping(uint256 => string) public seriesName;
     // series name => tokenId
@@ -55,6 +69,9 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
     // ebookId => price
     mapping(uint256 => uint256) public ebookPrice;
 
+    uint256 public tax;
+    mapping(address => uint256) public income;
+
     // PlaceHolder reserve for future use
     uint256[25] public EbookShopSlots;
 
@@ -71,20 +88,22 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
     }
 
     function initialize(
-        address _owner,
         address _crossChain,
         address _bucketHub,
         address _objectHub,
         address _groupHub,
-        address _ebookToken,
         address _paymentAddress,
         uint256 _callbackGasLimit,
         address _refundAddress,
-        uint8 _failureHandleStrategy
+        uint8 _failureHandleStrategy,
+        address _owner,
+        address _ebookToken,
+        uint256 _tax
     ) public initializer {
         require(_owner != address(0), string.concat("EbookShop: ", ERROR_INVALID_CALLER));
         _transferOwnership(_owner);
 
+        tax = _tax;
         ebookToken = _ebookToken;
         bucketToken = IBucketHub(_bucketHub).ERC721Token();
         objectToken = IObjectHub(_objectHub).ERC721Token();
@@ -118,7 +137,11 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         }
     }
 
-    // TODO assume sp provider's info will be provided by front-end
+    /**
+     * @dev Create a new series.
+     *
+     * Assuming the sp provider's info will be provided by the front-end.
+     */
     function createSeries(
         string calldata name,
         BucketStorage.BucketVisibilityType visibility,
@@ -134,6 +157,9 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         _createBucket(msg.sender, name, visibility, chargedReadQuota, spAddress, expireHeight, sig, _callbackData);
     }
 
+    /**
+     * @dev Provide an ebook's ID to create a group for it.
+     */
     function createGroup(uint256 _ebookId) public payable {
         require(
             IERC721NonTransferable(objectToken).ownerOf(_ebookId) == msg.sender,
@@ -147,6 +173,12 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         _createGroup(msg.sender, name, _callbackData);
     }
 
+    /**
+     * @dev Provide an ebook's ID to publish it.
+     *
+     * An ERC1155 token will be minted to the owner.
+     * Other users can buy the ebook by calling `buyEbook` function with given price.
+     */
     function publishEbook(uint256 _ebookId, uint256 price) external {
         require(
             IERC721NonTransferable(objectToken).ownerOf(_ebookId) == msg.sender,
@@ -159,6 +191,12 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         IERC1155(ebookToken).mint(msg.sender, _ebookId, 1, "");
     }
 
+    /**
+     * @dev Provide an ebook's ID to buy it.
+     *
+     * Buyer will be added to the group of the ebook.
+     * An ERC1155 token will be minted to the buyer.
+     */
     function buyEbook(uint256 _ebookId) external payable {
         require(ebookPrice[_ebookId] > 0, string.concat("EbookShop: ", ERROR_EBOOK_NOT_ONSHELF));
 
@@ -172,8 +210,17 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         address[] memory _member = new address[](1);
         _member[0] = msg.sender;
         _updateGroup(_owner, _groupId, UPDATE_ADD, _member);
+
+        uint256 _income = price * (100 - tax) / 100;
+        income[_owner] += _income;
     }
 
+    /**
+     * @dev Provide an ebook's ID to downshelf it.
+     *
+     * The ebook will be removed from the shelf and cannot be bought.
+     * Those who have already purchased are not affected.
+     */
     function downshelfEbook(uint256 _ebookId) external {
         require(
             IERC721NonTransferable(objectToken).ownerOf(_ebookId) == msg.sender,
@@ -184,7 +231,9 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         ebookPrice[_ebookId] = 0;
     }
 
-    // register resource that mirrored from GreenField to BSC
+    /**
+     * @dev Register bucket resource that mirrored from GreenField to BSC.
+     */
     function registerSeries(string calldata name, uint256 tokenId) external {
         require(
             IERC721NonTransferable(bucketToken).ownerOf(tokenId) == msg.sender,
@@ -197,6 +246,9 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         seriesId[name] = tokenId;
     }
 
+    /**
+     * @dev Register object resource that mirrored from GreenField to BSC.
+     */
     function registerEbook(
         string calldata _ebookName,
         uint256 _ebookId,
@@ -228,6 +280,9 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         }
     }
 
+    /**
+     * @dev Register group resource that mirrored from GreenField to BSC.
+     */
     function registerGroup(string calldata name, uint256 tokenId) external {
         require(
             IERC721NonTransferable(groupToken).ownerOf(tokenId) == msg.sender,
@@ -276,6 +331,11 @@ contract EbookShop is BucketApp, ObjectApp, GroupApp {
         } else {
             revert(string.concat("EbookShop: ", ERROR_INVALID_RESOURCE));
         }
+    }
+
+    function setTax(uint256 _tax) external onlyOwner {
+        require(_tax < 100, string.concat("EbookShop: ", ERROR_INVALID_TAX));
+        tax = _tax;
     }
 
     /*----------------- internal functions -----------------*/
