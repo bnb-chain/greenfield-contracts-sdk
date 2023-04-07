@@ -104,7 +104,7 @@ abstract contract GroupApp is BaseApp {
 
     /**
      * @dev Send the `createGroup` transaction to GroupHub.
-     * 
+     *
      * This function is used for the case that the caller does not need to receive the callback.
      */
     function _createGroup(address _owner, string memory _groupName) internal {
@@ -115,7 +115,7 @@ abstract contract GroupApp is BaseApp {
 
     /**
      * @dev Send the `createGroup` transaction to GroupHub.
-     * 
+     *
      * This function is used for the case that the caller needs to receive the callback.
      */
     function _createGroup(address _owner, string memory _groupName, bytes memory _callbackData) internal {
@@ -133,7 +133,7 @@ abstract contract GroupApp is BaseApp {
 
     /**
      * @dev Send the `deleteGroup` transaction to GroupHub.
-     * 
+     *
      * This function is used for the case that the caller does not need to receive the callback.
      */
     function _deleteGroup(uint256 _tokenId) internal virtual {
@@ -144,7 +144,7 @@ abstract contract GroupApp is BaseApp {
 
     /**
      * @dev Send the `deleteGroup` transaction to GroupHub.
-     * 
+     *
      * This function is used for the case that the caller needs to receive the callback.
      */
     function _deleteGroup(uint256 _tokenId, bytes memory _callbackData) internal virtual {
@@ -163,15 +163,10 @@ abstract contract GroupApp is BaseApp {
     /**
      * @dev Assemble a `GroupStorage.UpdateGroupSynPackage` from provided elements
      * and send the transaction to GroupHub.
-     * 
+     *
      * This function is used for the case that the caller does not need to receive the callback.
      */
-    function _updateGroup(
-        address _owner,
-        uint256 _tokenId,
-        uint8 _opType,
-        address[] memory _members
-    ) internal {
+    function _updateGroup(address _owner, uint256 _tokenId, uint8 _opType, address[] memory _members) internal {
         GroupStorage.UpdateGroupSynPackage memory updatePkg = GroupStorage.UpdateGroupSynPackage({
             operator: _owner,
             id: _tokenId,
@@ -188,7 +183,7 @@ abstract contract GroupApp is BaseApp {
     /**
      * @dev Assemble a `GroupStorage.UpdateGroupSynPackage` from provided elements
      * and send the transaction to GroupHub.
-     * 
+     *
      * This function is used for the case that the caller needs to receive the callback.
      */
     function _updateGroup(

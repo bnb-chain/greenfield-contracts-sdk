@@ -86,7 +86,7 @@ abstract contract ObjectApp is BaseApp {
 
     /**
      * @dev Send the `deleteObject` transaction to ObjectHub.
-     * 
+     *
      * This function is used for the case that the caller does not need to receive the callback.
      */
     function _deleteObject(uint256 _tokenId) internal {
@@ -97,7 +97,7 @@ abstract contract ObjectApp is BaseApp {
 
     /**
      * @dev Send the `deleteObject` transaction to ObjectHub.
-     * 
+     *
      * This function is used for the case that the caller needs to receive the callback.
      */
     function _deleteObject(uint256 _tokenId, bytes memory _callbackData) internal {

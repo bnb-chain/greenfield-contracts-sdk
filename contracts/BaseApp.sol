@@ -43,7 +43,7 @@ abstract contract BaseApp is Initializable {
 
     // callback config
     // necessary config for callback
-    // callbackGasLimit: the gas limit for callback. Will be charged in advance 
+    // callbackGasLimit: the gas limit for callback. Will be charged in advance
     // when the transaction is initiated, so it must be attached to the msg.value.
     // refundAddress: the address to receive the left gas fee after callback.
     // failureHandleStrategy: the strategy to handle the failure of callback.
@@ -79,9 +79,9 @@ abstract contract BaseApp is Initializable {
 
     /*----------------- external functions -----------------*/
     /**
-     * @dev Callback hook for greenfield system contract. 
-     * This function will be triggered when a cross-chain operation is completed on greenfield side 
-     * and return a package to bsc. 
+     * @dev Callback hook for greenfield system contract.
+     * This function will be triggered when a cross-chain operation is completed on greenfield side
+     * and return a package to bsc.
      * If the developers don’t need callback, this function can be undefined.
      */
     function greenfieldCall(
