@@ -19,7 +19,7 @@ After installing the library, import the desired contracts as follows:
 ```solidity
 pragma solidity ^0.8.0;
 
-import "@bnb-chain/contracts/BucketApp.sol";
+import "@bnb-chain/greenfield-contracts-sdk/BucketApp.sol";
 
 contract MyDapp is BucketApp {
 }
