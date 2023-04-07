@@ -1,16 +1,22 @@
 {
-  "private": true,
-  "name": "greenfield-contracts-sdk",
+  "name": "@bnb-chain/greenfield-contracts-sdk",
   "version": "0.0.1",
   "description": "Smart Contract library for Greenfield",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bnb-chain/greenfield-contracts-sdk.git"
   },
-  "author": "",
+  "author": "BNB Chain",
   "license": "GNU Affero General Public License v3.0",
   "bugs": {
     "url": "https://github.com/bnb-chain/greenfield-contracts-sdk/issues"
   },
-  "homepage": "https://github.com/bnb-chain/greenfield-contracts-sdk#readme"
+  "homepage": "https://github.com/bnb-chain/greenfield-contracts-sdk#readme",
+  "files": [
+    "contract"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  }
 }
