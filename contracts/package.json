@@ -1,13 +1,13 @@
 {
   "name": "@bnbchain/greenfield-contracts-sdk",
   "version": "0.0.1",
-  "description": "",
+  "description": "Smart Contract library for Greenfield",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bnb-chain/greenfield-contracts-sdk.git"
   },
   "author": "",
-  "license": "ISC",
+  "license": "GNU Affero General Public License v3.0",
   "bugs": {
     "url": "https://github.com/bnb-chain/greenfield-contracts-sdk/issues"
   },
