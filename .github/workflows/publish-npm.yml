@@ -13,8 +13,8 @@ jobs:
         with:
           node-version: 16
           registry-url: https://registry.npmjs.org/
-      - run: cd ./contracts
-      - run: npm ci
-      - run: npm publish
+      - run: |
+          cd ./contracts
+          npm publish
         env:
           NPM_TOKEN: ${{secrets.npm_token}}
