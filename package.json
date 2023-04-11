@@ -11,5 +11,13 @@
   "bugs": {
     "url": "https://github.com/bnb-chain/greenfield-contracts-sdk/issues"
   },
-  "homepage": "https://github.com/bnb-chain/greenfield-contracts-sdk#readme"
+  "homepage": "https://github.com/bnb-chain/greenfield-contracts-sdk#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.8.2",
+    "@openzeppelin/contracts-upgradeable": "^4.8.2"
+  }
 }
