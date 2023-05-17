@@ -14,11 +14,6 @@ abstract contract GroupApp is BaseApp {
     // This operation is only used for group.
     uint8 public constant TYPE_UPDATE = 4;
 
-    // update type
-    // add or remove members
-    uint8 public constant UPDATE_ADD = 0;
-    uint8 public constant UPDATE_REMOVE = 1;
-
     /*----------------- storage -----------------*/
     // system contract
     address public groupHub;
@@ -166,7 +161,12 @@ abstract contract GroupApp is BaseApp {
      *
      * This function is used for the case that the caller does not need to receive the callback.
      */
-    function _updateGroup(address _owner, uint256 _tokenId, uint8 _opType, address[] memory _members) internal {
+    function _updateGroup(
+        address _owner,
+        uint256 _tokenId,
+        GroupStorage.UpdateGroupOpType _opType,
+        address[] memory _members
+    ) internal {
         GroupStorage.UpdateGroupSynPackage memory updatePkg = GroupStorage.UpdateGroupSynPackage({
             operator: _owner,
             id: _tokenId,
@@ -189,7 +189,7 @@ abstract contract GroupApp is BaseApp {
     function _updateGroup(
         address _owner,
         uint256 _tokenId,
-        uint8 _opType,
+        GroupStorage.UpdateGroupOpType _opType,
         address[] memory _members,
         bytes memory _callbackData
     ) internal {
