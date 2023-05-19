@@ -1,6 +1,6 @@
 {
   "name": "greenfield-contracts-sdk",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Smart Contract library for Greenfield",
   "repository": {
     "type": "git",
