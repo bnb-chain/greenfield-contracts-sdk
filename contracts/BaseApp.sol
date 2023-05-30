@@ -101,14 +101,14 @@ abstract contract BaseApp is Initializable {
     /**
      * @dev Set `callbackGasLimit`.
      */
-    function _setCallbackGasLimit(uint256 _callbackGasLimit) internal {
+    function _setCallbackGasLimit(uint256 _callbackGasLimit) internal virtual {
         callbackGasLimit = _callbackGasLimit;
     }
 
     /**
      * @dev Set `failureHandleStrategy`.
      */
-    function _setFailureHandleStrategy(uint8 _failureHandleStrategy) internal {
+    function _setFailureHandleStrategy(uint8 _failureHandleStrategy) internal virtual {
         failureHandleStrategy = CmnStorage.FailureHandleStrategy(_failureHandleStrategy);
     }
 
