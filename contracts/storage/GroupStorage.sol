@@ -8,6 +8,9 @@ import "./CmnStorage.sol";
  * @dev Necessary data structures for GroupApp.
  */
 contract GroupStorage is CmnStorage {
+    // role
+    bytes32 public constant ROLE_UPDATE = keccak256("ROLE_UPDATE");
+
     /**
      * @dev The data structure of the package for update a group.
      */

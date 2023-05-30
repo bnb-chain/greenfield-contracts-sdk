@@ -45,10 +45,8 @@ abstract contract BaseApp is Initializable {
     // necessary config for callback
     // callbackGasLimit: the gas limit for callback. Will be charged in advance
     // when the transaction is initiated, so it must be attached to the msg.value.
-    // refundAddress: the address to receive the left gas fee after callback.
     // failureHandleStrategy: the strategy to handle the failure of callback.
     uint256 public callbackGasLimit;
-    address public refundAddress;
     CmnStorage.FailureHandleStrategy public failureHandleStrategy;
 
     /*----------------- initializer -----------------*/
@@ -58,22 +56,19 @@ abstract contract BaseApp is Initializable {
     function __base_app_init(
         address _crossChain,
         uint256 _callbackGasLimit,
-        address _refundAddress,
         uint8 _failureHandlerStrategy
     ) internal onlyInitializing {
-        __base_app_init_unchained(_crossChain, _callbackGasLimit, _refundAddress, _failureHandlerStrategy);
+        __base_app_init_unchained(_crossChain, _callbackGasLimit, _failureHandlerStrategy);
     }
 
     function __base_app_init_unchained(
         address _crossChain,
         uint256 _callbackGasLimit,
-        address _refundAddress,
         uint8 _failureHandlerStrategy
     ) internal onlyInitializing {
         crossChain = _crossChain;
 
         callbackGasLimit = _callbackGasLimit;
-        refundAddress = _refundAddress;
         failureHandleStrategy = CmnStorage.FailureHandleStrategy(_failureHandlerStrategy);
     }
 
@@ -106,21 +101,14 @@ abstract contract BaseApp is Initializable {
     /**
      * @dev Set `callbackGasLimit`.
      */
-    function _setCallbackGasLimit(uint256 _callbackGasLimit) internal {
+    function _setCallbackGasLimit(uint256 _callbackGasLimit) internal virtual {
         callbackGasLimit = _callbackGasLimit;
-    }
-
-    /**
-     * @dev Set `refundAddress`.
-     */
-    function _setRefundAddress(address _refundAddress) internal {
-        refundAddress = _refundAddress;
     }
 
     /**
      * @dev Set `failureHandleStrategy`.
      */
-    function _setFailureHandleStrategy(uint8 _failureHandleStrategy) internal {
+    function _setFailureHandleStrategy(uint8 _failureHandleStrategy) internal virtual {
         failureHandleStrategy = CmnStorage.FailureHandleStrategy(_failureHandleStrategy);
     }
 

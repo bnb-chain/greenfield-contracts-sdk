@@ -23,11 +23,10 @@ abstract contract ObjectApp is BaseApp {
     function __object_app_init(
         address _crossChain,
         uint256 _callbackGasLimit,
-        address _refundAddress,
         uint8 _failureHandlerStrategy,
         address _objectHub
     ) internal onlyInitializing {
-        __base_app_init_unchained(_crossChain, _callbackGasLimit, _refundAddress, _failureHandlerStrategy);
+        __base_app_init_unchained(_crossChain, _callbackGasLimit, _failureHandlerStrategy);
         __object_app_init_unchained(_objectHub);
     }
 
@@ -89,7 +88,7 @@ abstract contract ObjectApp is BaseApp {
      *
      * This function is used for the case that the caller does not need to receive the callback.
      */
-    function _deleteObject(uint256 _tokenId) internal {
+    function _deleteObject(uint256 _tokenId) internal virtual {
         uint256 totalFee = _getTotalFee();
         require(msg.value >= totalFee, string.concat("ObjectApp: ", ERROR_INSUFFICIENT_VALUE));
         IObjectHub(objectHub).deleteObject{value: msg.value}(_tokenId);
@@ -100,17 +99,23 @@ abstract contract ObjectApp is BaseApp {
      *
      * This function is used for the case that the caller needs to receive the callback.
      */
-    function _deleteObject(uint256 _tokenId, bytes memory _callbackData) internal {
+    function _deleteObject(
+        uint256 _tokenId,
+        address _refundAddress,
+        CmnStorage.FailureHandleStrategy _failureHandleStrategy,
+        bytes memory _callbackData,
+        uint256 _callbackGasLimit
+    ) internal virtual {
         CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
-            refundAddress: refundAddress,
-            failureHandleStrategy: failureHandleStrategy,
+            refundAddress: _refundAddress,
+            failureHandleStrategy: _failureHandleStrategy,
             callbackData: _callbackData
         });
 
         uint256 totalFee = _getTotalFee();
         require(msg.value >= totalFee, string.concat("ObjectApp: ", ERROR_INSUFFICIENT_VALUE));
-        IObjectHub(objectHub).deleteObject{value: msg.value}(_tokenId, callbackGasLimit, _extraData);
+        IObjectHub(objectHub).deleteObject{value: msg.value}(_tokenId, _callbackGasLimit, _extraData);
     }
 
     /**

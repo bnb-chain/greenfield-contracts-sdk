@@ -32,11 +32,10 @@ abstract contract GroupApp is BaseApp {
     function __group_app_init(
         address _crossChain,
         uint256 _callbackGasLimit,
-        address _refundAddress,
         uint8 _failureHandlerStrategy,
         address _groupHub
     ) internal onlyInitializing {
-        __base_app_init_unchained(_crossChain, _callbackGasLimit, _refundAddress, _failureHandlerStrategy);
+        __base_app_init_unchained(_crossChain, _callbackGasLimit, _failureHandlerStrategy);
         __group_app_init_unchained(_groupHub);
     }
 
@@ -102,7 +101,7 @@ abstract contract GroupApp is BaseApp {
      *
      * This function is used for the case that the caller does not need to receive the callback.
      */
-    function _createGroup(address _owner, string memory _groupName) internal {
+    function _createGroup(address _owner, string memory _groupName) internal virtual {
         uint256 totalFee = _getTotalFee();
         require(msg.value >= totalFee, string.concat("GroupApp: ", ERROR_INSUFFICIENT_VALUE));
         IGroupHub(groupHub).createGroup{value: msg.value}(_owner, _groupName);
@@ -113,17 +112,24 @@ abstract contract GroupApp is BaseApp {
      *
      * This function is used for the case that the caller needs to receive the callback.
      */
-    function _createGroup(address _owner, string memory _groupName, bytes memory _callbackData) internal {
+    function _createGroup(
+        address _refundAddress,
+        CmnStorage.FailureHandleStrategy _failureHandleStrategy,
+        bytes memory _callbackData,
+        address _owner,
+        string memory _groupName,
+        uint256 _callbackGasLimit
+    ) internal virtual {
         CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
-            refundAddress: refundAddress,
-            failureHandleStrategy: failureHandleStrategy,
+            refundAddress: _refundAddress,
+            failureHandleStrategy: _failureHandleStrategy,
             callbackData: _callbackData
         });
 
         uint256 totalFee = _getTotalFee();
         require(msg.value >= totalFee, string.concat("GroupApp: ", ERROR_INSUFFICIENT_VALUE));
-        IGroupHub(groupHub).createGroup{value: msg.value}(_owner, _groupName, callbackGasLimit, _extraData);
+        IGroupHub(groupHub).createGroup{value: msg.value}(_owner, _groupName, _callbackGasLimit, _extraData);
     }
 
     /**
@@ -142,17 +148,23 @@ abstract contract GroupApp is BaseApp {
      *
      * This function is used for the case that the caller needs to receive the callback.
      */
-    function _deleteGroup(uint256 _tokenId, bytes memory _callbackData) internal virtual {
+    function _deleteGroup(
+        uint256 _tokenId,
+        address _refundAddress,
+        CmnStorage.FailureHandleStrategy _failureHandleStrategy,
+        bytes memory _callbackData,
+        uint256 _callbackGasLimit
+    ) internal virtual {
         CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
-            refundAddress: refundAddress,
-            failureHandleStrategy: failureHandleStrategy,
+            refundAddress: _refundAddress,
+            failureHandleStrategy: _failureHandleStrategy,
             callbackData: _callbackData
         });
 
         uint256 totalFee = _getTotalFee();
         require(msg.value >= totalFee, string.concat("GroupApp: ", ERROR_INSUFFICIENT_VALUE));
-        IGroupHub(groupHub).deleteGroup{value: msg.value}(_tokenId, callbackGasLimit, _extraData);
+        IGroupHub(groupHub).deleteGroup{value: msg.value}(_tokenId, _callbackGasLimit, _extraData);
     }
 
     /**
@@ -166,7 +178,7 @@ abstract contract GroupApp is BaseApp {
         uint256 _tokenId,
         GroupStorage.UpdateGroupOpType _opType,
         address[] memory _members
-    ) internal {
+    ) internal virtual {
         GroupStorage.UpdateGroupSynPackage memory updatePkg = GroupStorage.UpdateGroupSynPackage({
             operator: _owner,
             id: _tokenId,
@@ -191,8 +203,11 @@ abstract contract GroupApp is BaseApp {
         uint256 _tokenId,
         GroupStorage.UpdateGroupOpType _opType,
         address[] memory _members,
-        bytes memory _callbackData
-    ) internal {
+        address _refundAddress,
+        CmnStorage.FailureHandleStrategy _failureHandleStrategy,
+        bytes memory _callbackData,
+        uint256 _callbackGasLimit
+    ) internal virtual {
         GroupStorage.UpdateGroupSynPackage memory updatePkg = GroupStorage.UpdateGroupSynPackage({
             operator: _owner,
             id: _tokenId,
@@ -203,14 +218,14 @@ abstract contract GroupApp is BaseApp {
 
         CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
-            refundAddress: refundAddress,
-            failureHandleStrategy: failureHandleStrategy,
+            refundAddress: _refundAddress,
+            failureHandleStrategy: _failureHandleStrategy,
             callbackData: _callbackData
         });
 
         uint256 totalFee = _getTotalFee();
         require(msg.value >= totalFee, string.concat("GroupApp: ", ERROR_INSUFFICIENT_VALUE));
-        IGroupHub(groupHub).updateGroup{value: msg.value}(updatePkg, callbackGasLimit, _extraData);
+        IGroupHub(groupHub).updateGroup{value: msg.value}(updatePkg, _callbackGasLimit, _extraData);
     }
 
     /**
