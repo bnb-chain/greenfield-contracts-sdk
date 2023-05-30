@@ -88,7 +88,7 @@ abstract contract ObjectApp is BaseApp {
      *
      * This function is used for the case that the caller does not need to receive the callback.
      */
-    function _deleteObject(uint256 _tokenId) internal {
+    function _deleteObject(uint256 _tokenId) internal virtual {
         uint256 totalFee = _getTotalFee();
         require(msg.value >= totalFee, string.concat("ObjectApp: ", ERROR_INSUFFICIENT_VALUE));
         IObjectHub(objectHub).deleteObject{value: msg.value}(_tokenId);
@@ -105,7 +105,7 @@ abstract contract ObjectApp is BaseApp {
         CmnStorage.FailureHandleStrategy _failureHandleStrategy,
         bytes memory _callbackData,
         uint256 _callbackGasLimit
-    ) internal {
+    ) internal virtual {
         CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
             refundAddress: _refundAddress,

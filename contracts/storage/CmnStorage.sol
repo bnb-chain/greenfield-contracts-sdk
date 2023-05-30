@@ -6,6 +6,10 @@ pragma solidity ^0.8.0;
  * @dev Necessary common data structures.
  */
 contract CmnStorage {
+    // role
+    bytes32 public constant ROLE_CREATE = keccak256("ROLE_CREATE");
+    bytes32 public constant ROLE_DELETE = keccak256("ROLE_DELETE");
+
     /**
      * @dev The data structure for callback.
      */

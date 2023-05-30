@@ -101,7 +101,7 @@ abstract contract BucketApp is BaseApp {
     /**
      * @dev Set `paymentAddress`.
      */
-    function _setPaymentAddress(address _paymentAddress) internal {
+    function _setPaymentAddress(address _paymentAddress) internal virtual {
         paymentAddress = _paymentAddress;
     }
 
@@ -119,7 +119,7 @@ abstract contract BucketApp is BaseApp {
         address _spAddress,
         uint256 _expireHeight,
         bytes calldata _sig
-    ) internal {
+    ) internal virtual {
         BucketStorage.CreateBucketSynPackage memory createPkg = BucketStorage.CreateBucketSynPackage({
             creator: _creator,
             name: _name,
@@ -156,7 +156,7 @@ abstract contract BucketApp is BaseApp {
         CmnStorage.FailureHandleStrategy _failureHandleStrategy,
         bytes memory _callbackData,
         uint256 _callbackGasLimit
-    ) internal {
+    ) internal virtual {
         BucketStorage.CreateBucketSynPackage memory createPkg = BucketStorage.CreateBucketSynPackage({
             creator: _creator,
             name: _name,
@@ -186,7 +186,7 @@ abstract contract BucketApp is BaseApp {
      *
      * This function is used for the case that the caller does not need to receive the callback.
      */
-    function _deleteBucket(uint256 _tokenId) internal {
+    function _deleteBucket(uint256 _tokenId) internal virtual {
         uint256 totalFee = _getTotalFee();
         require(msg.value >= totalFee, string.concat("BucketApp: ", ERROR_INSUFFICIENT_VALUE));
         IBucketHub(bucketHub).deleteBucket{value: msg.value}(_tokenId);
@@ -203,7 +203,7 @@ abstract contract BucketApp is BaseApp {
         CmnStorage.FailureHandleStrategy _failureHandleStrategy,
         bytes memory _callbackData,
         uint256 _callbackGasLimit
-    ) internal {
+    ) internal virtual {
         CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
             refundAddress: _refundAddress,

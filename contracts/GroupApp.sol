@@ -101,7 +101,7 @@ abstract contract GroupApp is BaseApp {
      *
      * This function is used for the case that the caller does not need to receive the callback.
      */
-    function _createGroup(address _owner, string memory _groupName) internal {
+    function _createGroup(address _owner, string memory _groupName) internal virtual {
         uint256 totalFee = _getTotalFee();
         require(msg.value >= totalFee, string.concat("GroupApp: ", ERROR_INSUFFICIENT_VALUE));
         IGroupHub(groupHub).createGroup{value: msg.value}(_owner, _groupName);
@@ -119,7 +119,7 @@ abstract contract GroupApp is BaseApp {
         address _owner,
         string memory _groupName,
         uint256 _callbackGasLimit
-    ) internal {
+    ) internal virtual {
         CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
             appAddress: address(this),
             refundAddress: _refundAddress,
@@ -178,7 +178,7 @@ abstract contract GroupApp is BaseApp {
         uint256 _tokenId,
         GroupStorage.UpdateGroupOpType _opType,
         address[] memory _members
-    ) internal {
+    ) internal virtual {
         GroupStorage.UpdateGroupSynPackage memory updatePkg = GroupStorage.UpdateGroupSynPackage({
             operator: _owner,
             id: _tokenId,
@@ -207,7 +207,7 @@ abstract contract GroupApp is BaseApp {
         CmnStorage.FailureHandleStrategy _failureHandleStrategy,
         bytes memory _callbackData,
         uint256 _callbackGasLimit
-    ) internal {
+    ) internal virtual {
         GroupStorage.UpdateGroupSynPackage memory updatePkg = GroupStorage.UpdateGroupSynPackage({
             operator: _owner,
             id: _tokenId,
