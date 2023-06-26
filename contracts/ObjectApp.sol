@@ -45,7 +45,7 @@ abstract contract ObjectApp is BaseApp {
         uint256 resourceId,
         bytes calldata callbackData
     ) external virtual override {
-        require(msg.sender == crossChain, string.concat("ObjectApp: ", ERROR_INVALID_CALLER));
+        require(msg.sender == objectHub, string.concat("ObjectApp: ", ERROR_INVALID_CALLER));
         require(resourceType == RESOURCE_OBJECT, string.concat("ObjectApp: ", ERROR_INVALID_RESOURCE));
 
         _objectGreenfieldCall(status, operationType, resourceId, callbackData);
