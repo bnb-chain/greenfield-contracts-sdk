@@ -54,7 +54,7 @@ abstract contract GroupApp is BaseApp {
         uint256 resourceId,
         bytes calldata callbackData
     ) external virtual override {
-        require(msg.sender == crossChain, string.concat("GroupApp: ", ERROR_INVALID_CALLER));
+        require(msg.sender == groupHub, string.concat("GroupApp: ", ERROR_INVALID_CALLER));
         require(resourceType == RESOURCE_GROUP, string.concat("GroupApp: ", ERROR_INVALID_RESOURCE));
 
         _groupGreenfieldCall(status, operationType, resourceId, callbackData);

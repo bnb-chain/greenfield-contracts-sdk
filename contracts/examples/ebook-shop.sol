@@ -72,9 +72,6 @@ contract EbookShop is AccessControl, BucketApp, ObjectApp, GroupApp {
     uint256 public feeRate;
     mapping(address => uint256) public income;
 
-    // PlaceHolder reserve for future use
-    uint256[25] _reservedSlots;
-
     function initialize(
         address _crossChain,
         address _bucketHub,
@@ -111,7 +108,7 @@ contract EbookShop is AccessControl, BucketApp, ObjectApp, GroupApp {
         uint256 resourceId,
         bytes calldata callbackData
     ) external override(BucketApp, ObjectApp, GroupApp) {
-        require(msg.sender == crossChain, string.concat("EbookShop: ", ERROR_INVALID_CALLER));
+        require(msg.sender == bucketHub || msg.sender == objectHub || msg.sender == groupHub, string.concat("EbookShop: ", ERROR_INVALID_CALLER));
 
         if (resourceType == RESOURCE_BUCKET) {
             _bucketGreenfieldCall(status, operationType, resourceId, callbackData);
@@ -332,4 +329,7 @@ contract EbookShop is AccessControl, BucketApp, ObjectApp, GroupApp {
         require(_feeRate < 100, string.concat("EbookShop: ", ERROR_INVALID_FEE_RATE));
         feeRate = _feeRate;
     }
+
+    // PlaceHolder reserve for future use
+    uint256[25] private __reservedSlots;
 }
