@@ -6,14 +6,10 @@ import "@bnb-chain/greenfield-contracts/contracts/interface/IGroupHub.sol";
 
 import "./BaseApp.sol";
 
-abstract contract GroupApp is BaseApp {
+abstract contract GroupApp is BaseApp, GroupStorage {
     /*----------------- constants -----------------*/
     // Group's resource code
     uint8 public constant RESOURCE_GROUP = 0x06;
-
-    // operation code
-    // This operation is only used for group.
-    uint8 public constant TYPE_UPDATE = 4;
 
     /*----------------- storage -----------------*/
     // system contract

@@ -9,7 +9,10 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "../BucketApp.sol";
 import "../ObjectApp.sol";
 import "../GroupApp.sol";
-import "../interface/IERC1155.sol";
+
+interface IERC1155Mintable {
+    function mint(address to, uint256 id, uint256 amount, bytes memory data) external;
+}
 
 /**
  * @dev An example of a simple ebook shop
@@ -188,7 +191,7 @@ contract EbookShop is AccessControl, BucketApp, ObjectApp, GroupApp {
         require(price > 0, string.concat("EbookShop: ", ERROR_INVALID_PRICE));
 
         ebookPrice[_ebookId] = price;
-        IERC1155(ebookToken).mint(msg.sender, _ebookId, 1, "");
+        IERC1155Mintable(ebookToken).mint(msg.sender, _ebookId, 1, "");
     }
 
     /**
@@ -203,7 +206,7 @@ contract EbookShop is AccessControl, BucketApp, ObjectApp, GroupApp {
         uint256 price = ebookPrice[_ebookId];
         require(msg.value >= price, string.concat("EbookShop: ", ERROR_NOT_ENOUGH_VALUE));
 
-        IERC1155(ebookToken).mint(msg.sender, _ebookId, 1, "");
+        IERC1155Mintable(ebookToken).mint(msg.sender, _ebookId, 1, "");
 
         uint256 _groupId = ebookGroup[_ebookId];
         address _owner = IERC721NonTransferable(groupToken).ownerOf(_groupId);

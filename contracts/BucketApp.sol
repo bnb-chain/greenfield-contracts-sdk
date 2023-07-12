@@ -10,7 +10,7 @@ import "./BaseApp.sol";
  * @dev Contract module that allows children to interact with the
  * BucketHub easily.
  */
-abstract contract BucketApp is BaseApp {
+abstract contract BucketApp is BaseApp, BucketStorage {
     /*----------------- constants -----------------*/
     // Bucket's resource code
     uint8 public constant RESOURCE_BUCKET = 0x04;

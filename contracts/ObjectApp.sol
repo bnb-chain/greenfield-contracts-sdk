@@ -6,7 +6,7 @@ import "@bnb-chain/greenfield-contracts/contracts/interface/IObjectHub.sol";
 
 import "./BaseApp.sol";
 
-abstract contract ObjectApp is BaseApp {
+abstract contract ObjectApp is BaseApp, ObjectStorage {
     /*----------------- constants -----------------*/
     uint8 public constant RESOURCE_OBJECT = 0x05;
 
