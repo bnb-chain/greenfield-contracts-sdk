@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.0;
 
+import "@bnb-chain/greenfield-contracts/contracts/interface/IERC721Nontransferable.sol";
+import "@bnb-chain/greenfield-contracts/contracts/interface/IERC1155Nontransferable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "../BucketApp.sol";
 import "../ObjectApp.sol";
 import "../GroupApp.sol";
 import "../interface/IERC1155.sol";
-import "../interface/IERC721Nontransferable.sol";
-import "../interface/IERC1155Nontransferable.sol";
 
 /**
  * @dev An example of a simple ebook shop
@@ -89,10 +89,10 @@ contract EbookShop is AccessControl, BucketApp, ObjectApp, GroupApp {
 
         feeRate = _feeRate;
         ebookToken = _ebookToken;
-        bucketToken = IBucketHub(_bucketHub).ERC721Token();
-        objectToken = IObjectHub(_objectHub).ERC721Token();
-        groupToken = IGroupHub(_groupHub).ERC721Token();
-        memberToken = IGroupHub(_groupHub).ERC1155Token();
+        bucketToken = CmnStorage(_bucketHub).ERC721Token();
+        objectToken = CmnStorage(_objectHub).ERC721Token();
+        groupToken = CmnStorage(_groupHub).ERC721Token();
+        memberToken = GroupStorage(_groupHub).ERC1155Token();
 
         __base_app_init_unchained(_crossChain, _callbackGasLimit, _failureHandleStrategy);
         __bucket_app_init_unchained(_bucketHub, _paymentAddress);
@@ -108,7 +108,10 @@ contract EbookShop is AccessControl, BucketApp, ObjectApp, GroupApp {
         uint256 resourceId,
         bytes calldata callbackData
     ) external override(BucketApp, ObjectApp, GroupApp) {
-        require(msg.sender == bucketHub || msg.sender == objectHub || msg.sender == groupHub, string.concat("EbookShop: ", ERROR_INVALID_CALLER));
+        require(
+            msg.sender == bucketHub || msg.sender == objectHub || msg.sender == groupHub,
+            string.concat("EbookShop: ", ERROR_INVALID_CALLER)
+        );
 
         if (resourceType == RESOURCE_BUCKET) {
             _bucketGreenfieldCall(status, operationType, resourceId, callbackData);

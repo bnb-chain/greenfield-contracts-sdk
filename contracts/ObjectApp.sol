@@ -2,8 +2,9 @@
 
 pragma solidity ^0.8.0;
 
+import "@bnb-chain/greenfield-contracts/contracts/interface/IObjectHub.sol";
+
 import "./BaseApp.sol";
-import "./interface/IObjectHub.sol";
 
 abstract contract ObjectApp is BaseApp {
     /*----------------- constants -----------------*/
@@ -70,17 +71,17 @@ abstract contract ObjectApp is BaseApp {
     }
 
     /**
-     * @dev Retry the first failed package of this app address in the ObejctHub's queue.
+     * @dev Retry the first failed package of this app address in the ObjectHub's queue.
      */
     function _retryObjectPackage() internal virtual {
-        IObjectHub(objectHub).retryPackage();
+        ICmnHub(objectHub).retryPackage();
     }
 
     /**
-     * @dev Skip the first failed package of this app address in the ObejctHub's queue.
+     * @dev Skip the first failed package of this app address in the ObjectHub's queue.
      */
     function _skipObjectPackage() internal virtual {
-        IObjectHub(objectHub).skipPackage();
+        ICmnHub(objectHub).skipPackage();
     }
 
     /**
@@ -102,7 +103,7 @@ abstract contract ObjectApp is BaseApp {
     function _deleteObject(
         uint256 _tokenId,
         address _refundAddress,
-        CmnStorage.FailureHandleStrategy _failureHandleStrategy,
+        PackageQueue.FailureHandleStrategy _failureHandleStrategy,
         bytes memory _callbackData,
         uint256 _callbackGasLimit
     ) internal virtual {
