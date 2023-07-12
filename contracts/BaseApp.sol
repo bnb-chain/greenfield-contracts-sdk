@@ -2,10 +2,9 @@
 
 pragma solidity ^0.8.0;
 
+import "@bnb-chain/greenfield-contracts/contracts/middle-layer/resource-mirror/storage/CmnStorage.sol";
+import "@bnb-chain/greenfield-contracts/contracts/interface/ICrossChain.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
-import "./storage/CmnStorage.sol";
-import "./interface/ICrossChain.sol";
 
 /**
  * @dev Contract module that defines common constants/variables/functions.
@@ -47,7 +46,7 @@ abstract contract BaseApp is Initializable {
     // when the transaction is initiated, so it must be attached to the msg.value.
     // failureHandleStrategy: the strategy to handle the failure of callback.
     uint256 public callbackGasLimit;
-    CmnStorage.FailureHandleStrategy public failureHandleStrategy;
+    PackageQueue.FailureHandleStrategy public failureHandleStrategy;
 
     /*----------------- initializer -----------------*/
     /**
@@ -69,7 +68,7 @@ abstract contract BaseApp is Initializable {
         crossChain = _crossChain;
 
         callbackGasLimit = _callbackGasLimit;
-        failureHandleStrategy = CmnStorage.FailureHandleStrategy(_failureHandlerStrategy);
+        failureHandleStrategy = PackageQueue.FailureHandleStrategy(_failureHandlerStrategy);
     }
 
     /*----------------- external functions -----------------*/
@@ -109,7 +108,7 @@ abstract contract BaseApp is Initializable {
      * @dev Set `failureHandleStrategy`.
      */
     function _setFailureHandleStrategy(uint8 _failureHandleStrategy) internal virtual {
-        failureHandleStrategy = CmnStorage.FailureHandleStrategy(_failureHandleStrategy);
+        failureHandleStrategy = PackageQueue.FailureHandleStrategy(_failureHandleStrategy);
     }
 
     /**
