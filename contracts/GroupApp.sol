@@ -2,8 +2,9 @@
 
 pragma solidity ^0.8.0;
 
+import "@bnb-chain/greenfield-contracts/contracts/interface/IGroupHub.sol";
+
 import "./BaseApp.sol";
-import "./interface/IGroupHub.sol";
 
 abstract contract GroupApp is BaseApp {
     /*----------------- constants -----------------*/
@@ -86,14 +87,14 @@ abstract contract GroupApp is BaseApp {
      * @dev Retry the first failed package of this app address in the GroupHub's queue.
      */
     function _retryGroupPackage() internal virtual {
-        IGroupHub(groupHub).retryPackage();
+        ICmnHub(groupHub).retryPackage();
     }
 
     /**
      * @dev Skip the first failed package of this app address in the GroupHub's queue.
      */
     function _skipGroupPackage() internal virtual {
-        IGroupHub(groupHub).skipPackage();
+        ICmnHub(groupHub).skipPackage();
     }
 
     /**
@@ -114,7 +115,7 @@ abstract contract GroupApp is BaseApp {
      */
     function _createGroup(
         address _refundAddress,
-        CmnStorage.FailureHandleStrategy _failureHandleStrategy,
+        PackageQueue.FailureHandleStrategy _failureHandleStrategy,
         bytes memory _callbackData,
         address _owner,
         string memory _groupName,
@@ -151,7 +152,7 @@ abstract contract GroupApp is BaseApp {
     function _deleteGroup(
         uint256 _tokenId,
         address _refundAddress,
-        CmnStorage.FailureHandleStrategy _failureHandleStrategy,
+        PackageQueue.FailureHandleStrategy _failureHandleStrategy,
         bytes memory _callbackData,
         uint256 _callbackGasLimit
     ) internal virtual {
@@ -204,7 +205,7 @@ abstract contract GroupApp is BaseApp {
         GroupStorage.UpdateGroupOpType _opType,
         address[] memory _members,
         address _refundAddress,
-        CmnStorage.FailureHandleStrategy _failureHandleStrategy,
+        PackageQueue.FailureHandleStrategy _failureHandleStrategy,
         bytes memory _callbackData,
         uint256 _callbackGasLimit
     ) internal virtual {

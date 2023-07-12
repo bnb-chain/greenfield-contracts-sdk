@@ -2,8 +2,9 @@
 
 pragma solidity ^0.8.0;
 
+import "@bnb-chain/greenfield-contracts/contracts/interface/IBucketHub.sol";
+
 import "./BaseApp.sol";
-import "./interface/IBucketHub.sol";
 
 /**
  * @dev Contract module that allows children to interact with the
@@ -88,14 +89,14 @@ abstract contract BucketApp is BaseApp {
      * @dev Retry the first failed package of this app address in the BucketHub's queue.
      */
     function _retryBucketPackage() internal virtual {
-        IBucketHub(bucketHub).retryPackage();
+        ICmnHub(bucketHub).retryPackage();
     }
 
     /**
      * @dev Skip the first failed package of this app address in the BucketHub's queue.
      */
     function _skipBucketPackage() internal virtual {
-        IBucketHub(bucketHub).skipPackage();
+        ICmnHub(bucketHub).skipPackage();
     }
 
     /**
@@ -153,7 +154,7 @@ abstract contract BucketApp is BaseApp {
         bytes calldata _sig,
         uint64 _chargedReadQuota,
         address _refundAddress,
-        CmnStorage.FailureHandleStrategy _failureHandleStrategy,
+        PackageQueue.FailureHandleStrategy _failureHandleStrategy,
         bytes memory _callbackData,
         uint256 _callbackGasLimit
     ) internal virtual {
@@ -200,7 +201,7 @@ abstract contract BucketApp is BaseApp {
     function _deleteBucket(
         uint256 _tokenId,
         address _refundAddress,
-        CmnStorage.FailureHandleStrategy _failureHandleStrategy,
+        PackageQueue.FailureHandleStrategy _failureHandleStrategy,
         bytes memory _callbackData,
         uint256 _callbackGasLimit
     ) internal virtual {
