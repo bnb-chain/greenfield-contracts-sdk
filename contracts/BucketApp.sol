@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import "@bnb-chain/greenfield-contracts/contracts/interface/ICmnHub.sol";
 import "@bnb-chain/greenfield-contracts/contracts/interface/IBucketHub.sol";
 
 import "./BaseApp.sol";
