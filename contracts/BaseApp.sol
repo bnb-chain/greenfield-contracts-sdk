@@ -2,33 +2,16 @@
 
 pragma solidity ^0.8.0;
 
-import "@bnb-chain/greenfield-contracts/contracts/middle-layer/resource-mirror/storage/CmnStorage.sol";
 import "@bnb-chain/greenfield-contracts/contracts/interface/ICrossChain.sol";
+import "@bnb-chain/greenfield-contracts/contracts/middle-layer/resource-mirror/storage/CmnStorage.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @dev Contract module that defines common constants/variables/functions.
  * This module is used through inheritance.
  */
-abstract contract BaseApp is Initializable {
+abstract contract BaseApp is Initializable, CmnStorage {
     /*----------------- constants -----------------*/
-    // status of cross-chain package
-    // every package from BSC to greenfield will have a response with a status
-    // 0: success
-    // 1: failed
-    // 2: unexpected, which means unexpected error happened in the underlying cross-chain process
-    uint32 public constant STATUS_SUCCESS = 0;
-    uint32 public constant STATUS_FAILED = 1;
-    uint32 public constant STATUS_UNEXPECTED = 2;
-
-    // operation type
-    // for a resource, there are three basic operation types
-    // 1: mirror, which is not available for external contracts
-    // 2: create, which means create a new resource
-    // 3: delete, which means delete an existing resource
-    uint8 public constant TYPE_CREATE = 2;
-    uint8 public constant TYPE_DELETE = 3;
-
     // error code
     // short error code for each error
     string public constant ERROR_INVALID_CALLER = "0";
