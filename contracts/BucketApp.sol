@@ -120,7 +120,7 @@ abstract contract BucketApp is BaseApp, BucketStorage {
         uint64 _chargedReadQuota,
         address _spAddress,
         uint256 _expireHeight,
-        bytes calldata _sig
+        bytes memory _sig
     ) internal virtual {
         BucketStorage.CreateBucketSynPackage memory createPkg = BucketStorage.CreateBucketSynPackage({
             creator: _creator,
@@ -152,7 +152,7 @@ abstract contract BucketApp is BaseApp, BucketStorage {
         address _paymentAddress,
         address _spAddress,
         uint256 _expireHeight,
-        bytes calldata _sig,
+        bytes memory _sig,
         uint64 _chargedReadQuota,
         address _refundAddress,
         PackageQueue.FailureHandleStrategy _failureHandleStrategy,

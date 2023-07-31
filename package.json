@@ -1,6 +1,6 @@
 {
   "name": "greenfield-contracts-sdk",
-  "version": "0.0.6-alpha1",
+  "version": "0.0.7",
   "description": "Smart Contract library for Greenfield",
   "repository": {
     "type": "git",
@@ -17,7 +17,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@bnb-chain/greenfield-contracts": "0.0.9-alpha3",
+    "@bnb-chain/greenfield-contracts": "0.0.9",
     "@openzeppelin/contracts": "^4.8.3",
     "@openzeppelin/contracts-upgradeable": "^4.8.3"
   }
