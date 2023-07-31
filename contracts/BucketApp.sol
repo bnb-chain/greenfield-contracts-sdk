@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import "@bnb-chain/greenfield-contracts/contracts/interface/ICmnHub.sol";
 import "@bnb-chain/greenfield-contracts/contracts/interface/IBucketHub.sol";
 
 import "./BaseApp.sol";
@@ -10,7 +11,7 @@ import "./BaseApp.sol";
  * @dev Contract module that allows children to interact with the
  * BucketHub easily.
  */
-abstract contract BucketApp is BaseApp {
+abstract contract BucketApp is BaseApp, BucketStorage {
     /*----------------- constants -----------------*/
     // Bucket's resource code
     uint8 public constant RESOURCE_BUCKET = 0x04;
@@ -119,7 +120,7 @@ abstract contract BucketApp is BaseApp {
         uint64 _chargedReadQuota,
         address _spAddress,
         uint256 _expireHeight,
-        bytes calldata _sig
+        bytes memory _sig
     ) internal virtual {
         BucketStorage.CreateBucketSynPackage memory createPkg = BucketStorage.CreateBucketSynPackage({
             creator: _creator,
@@ -151,7 +152,7 @@ abstract contract BucketApp is BaseApp {
         address _paymentAddress,
         address _spAddress,
         uint256 _expireHeight,
-        bytes calldata _sig,
+        bytes memory _sig,
         uint64 _chargedReadQuota,
         address _refundAddress,
         PackageQueue.FailureHandleStrategy _failureHandleStrategy,
