@@ -2,20 +2,20 @@
 # yarn lockfile v1
 
 
-"@bnb-chain/greenfield-contracts@0.1.0":
-  version "0.1.0"
-  resolved "https://registry.npmjs.org/@bnb-chain/greenfield-contracts/-/greenfield-contracts-0.1.0.tgz"
-  integrity sha512-oWmyuIBuV6zmqOBgSoOW1+KNi9bi8eGGeOkdKeku2N84Y7XMCfpMFG8NFX6qA0t91+pgMjx60+TTAUHniWZtWA==
+"@bnb-chain/greenfield-contracts@0.1.1":
+  version "0.1.1"
+  resolved "https://registry.npmjs.org/@bnb-chain/greenfield-contracts/-/greenfield-contracts-0.1.1.tgz"
+  integrity sha512-VBOLghlmw21zuP15xpKjoMFRKhZakgZgKy9EmqH/ZJKZA9+zqQcYwUK+r0zsaSTWTngLKHJxXOTSclTJ2DHDAQ==
   dependencies:
-    "@openzeppelin/contracts" "4.8.3"
-    "@openzeppelin/contracts-upgradeable" "4.8.3"
+    "@openzeppelin/contracts" "4.9.3"
+    "@openzeppelin/contracts-upgradeable" "4.9.3"
 
-"@openzeppelin/contracts-upgradeable@^4.8.3", "@openzeppelin/contracts-upgradeable@4.8.3":
-  version "4.8.3"
-  resolved "https://registry.npmjs.org/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.8.3.tgz"
-  integrity sha512-SXDRl7HKpl2WDoJpn7CK/M9U4Z8gNXDHHChAKh0Iz+Wew3wu6CmFYBeie3je8V0GSXZAIYYwUktSrnW/kwVPtg==
+"@openzeppelin/contracts-upgradeable@^4.9.3", "@openzeppelin/contracts-upgradeable@4.9.3":
+  version "4.9.3"
+  resolved "https://registry.npmjs.org/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.9.3.tgz"
+  integrity sha512-jjaHAVRMrE4UuZNfDwjlLGDxTHWIOwTJS2ldnc278a0gevfXfPr8hxKEVBGFBE96kl2G3VHDZhUimw/+G3TG2A==
 
-"@openzeppelin/contracts@^4.8.3", "@openzeppelin/contracts@4.8.3":
-  version "4.8.3"
-  resolved "https://registry.npmjs.org/@openzeppelin/contracts/-/contracts-4.8.3.tgz"
-  integrity sha512-bQHV8R9Me8IaJoJ2vPG4rXcL7seB7YVuskr4f+f5RyOStSZetwzkWtoqDMl5erkBJy0lDRUnIR2WIkPiC0GJlg==
+"@openzeppelin/contracts@^4.9.3", "@openzeppelin/contracts@4.9.3":
+  version "4.9.3"
+  resolved "https://registry.npmjs.org/@openzeppelin/contracts/-/contracts-4.9.3.tgz"
+  integrity sha512-He3LieZ1pP2TNt5JbkPA4PNT9WC3gOTOlDcFGJW4Le4QKqwmiNJCRt44APfxMxvq7OugU/cqYuPcSBzOw38DAg==

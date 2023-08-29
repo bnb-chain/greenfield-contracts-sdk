@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-
 pragma solidity ^0.8.0;
 
 import "@bnb-chain/greenfield-contracts/contracts/interface/IERC721Nontransferable.sol";
@@ -211,8 +210,10 @@ contract EbookShop is AccessControl, BucketApp, ObjectApp, GroupApp {
         uint256 _groupId = ebookGroup[_ebookId];
         address _owner = IERC721NonTransferable(groupToken).ownerOf(_groupId);
         address[] memory _member = new address[](1);
+        uint64[] memory _expiration = new uint64[](1);
         _member[0] = msg.sender;
-        _updateGroup(_owner, _groupId, GroupStorage.UpdateGroupOpType.AddMembers, _member);
+        _expiration[0] = 0;
+        _updateGroup(_owner, _groupId, GroupStorage.UpdateGroupOpType.AddMembers, _member, _expiration);
 
         uint256 _income = price * (100 - feeRate) / 100;
         income[_owner] += _income;
@@ -335,7 +336,4 @@ contract EbookShop is AccessControl, BucketApp, ObjectApp, GroupApp {
         require(_feeRate < 100, string.concat("EbookShop: ", ERROR_INVALID_FEE_RATE));
         feeRate = _feeRate;
     }
-
-    // PlaceHolder reserve for future use
-    uint256[25] private __reservedSlots;
 }

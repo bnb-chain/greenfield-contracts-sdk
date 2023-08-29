@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-
 pragma solidity ^0.8.0;
 
 import "@bnb-chain/greenfield-contracts/contracts/interface/ICmnHub.sol";
@@ -227,4 +226,7 @@ abstract contract BucketApp is BaseApp, BucketStorage {
      * @dev Handler for `deleteBucket`'s callback.
      */
     function _deleteBucketCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}
+
+    // PlaceHolder reserve for future use
+    uint256[50] private __reservedCmnStorageSlots;
 }
