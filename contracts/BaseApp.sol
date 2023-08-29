@@ -102,4 +102,7 @@ abstract contract BaseApp is Initializable, CmnStorage {
         uint256 gasPrice = ICrossChain(crossChain).callbackGasPrice();
         return relayFee + minAckRelayFee + callbackGasLimit * gasPrice;
     }
+
+    // PlaceHolder reserve for future use
+    uint256[50] private __reservedCmnStorageSlots;
 }
