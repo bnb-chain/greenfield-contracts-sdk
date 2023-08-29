@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-
 pragma solidity ^0.8.0;
 
 import "@bnb-chain/greenfield-contracts/contracts/interface/ICmnHub.sol";
@@ -175,14 +174,16 @@ abstract contract GroupApp is BaseApp, GroupStorage {
         address _owner,
         uint256 _tokenId,
         GroupStorage.UpdateGroupOpType _opType,
-        address[] memory _members
+        address[] memory _members,
+        uint64[] memory _expiration
     ) internal virtual {
         GroupStorage.UpdateGroupSynPackage memory updatePkg = GroupStorage.UpdateGroupSynPackage({
             operator: _owner,
             id: _tokenId,
             opType: _opType,
             members: _members,
-            extraData: ""
+            extraData: "",
+            memberExpiration: _expiration
         });
 
         uint256 totalFee = _getTotalFee();
@@ -201,6 +202,7 @@ abstract contract GroupApp is BaseApp, GroupStorage {
         uint256 _tokenId,
         GroupStorage.UpdateGroupOpType _opType,
         address[] memory _members,
+        uint64[] memory _expiration,
         address _refundAddress,
         PackageQueue.FailureHandleStrategy _failureHandleStrategy,
         bytes memory _callbackData,
@@ -211,7 +213,8 @@ abstract contract GroupApp is BaseApp, GroupStorage {
             id: _tokenId,
             opType: _opType,
             members: _members,
-            extraData: ""
+            extraData: "",
+            memberExpiration: _expiration
         });
 
         CmnStorage.ExtraData memory _extraData = CmnStorage.ExtraData({
@@ -240,4 +243,7 @@ abstract contract GroupApp is BaseApp, GroupStorage {
      * @dev Handler for `updateGroup`'s callback.
      */
     function _updateGroupCallback(uint32 _status, uint256 _tokenId, bytes memory _callbackData) internal virtual {}
+
+    // PlaceHolder reserve for future use
+    uint256[50] private __reservedCmnStorageSlots;
 }
