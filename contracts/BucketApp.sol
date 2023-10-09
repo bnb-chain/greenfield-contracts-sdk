@@ -19,9 +19,6 @@ abstract contract BucketApp is BaseApp, BucketStorage {
     // system contract
     address public bucketHub;
 
-    // payment address for resource creation
-    address public paymentAddress;
-
     event CreateBucketSuccess(bytes bucketName, uint256 indexed tokenId);
     event CreateBucketFailed(uint32 status, bytes bucketName);
     event DeleteBucketSuccess(uint256 indexed tokenId);
@@ -30,22 +27,20 @@ abstract contract BucketApp is BaseApp, BucketStorage {
     /*----------------- initializer -----------------*/
     /**
      * @dev Sets the values for {crossChain}, {callbackGasLimit}, {refundAddress}, {failureHandleStrategy},
-     * {bucketHub} and {paymentAddress}.
+     * and {bucketHub}.
      */
     function __bucket_app_init(
         address _crossChain,
         uint256 _callbackGasLimit,
         uint8 _failureHandlerStrategy,
-        address _bucketHub,
-        address _paymentAddress
+        address _bucketHub
     ) internal onlyInitializing {
         __base_app_init_unchained(_crossChain, _callbackGasLimit, _failureHandlerStrategy);
-        __bucket_app_init_unchained(_bucketHub, _paymentAddress);
+        __bucket_app_init_unchained(_bucketHub);
     }
 
-    function __bucket_app_init_unchained(address _bucketHub, address _paymentAddress) internal onlyInitializing {
+    function __bucket_app_init_unchained(address _bucketHub) internal onlyInitializing {
         bucketHub = _bucketHub;
-        paymentAddress = _paymentAddress;
     }
 
     /*----------------- external functions -----------------*/
@@ -100,13 +95,6 @@ abstract contract BucketApp is BaseApp, BucketStorage {
     }
 
     /**
-     * @dev Set `paymentAddress`.
-     */
-    function _setPaymentAddress(address _paymentAddress) internal virtual {
-        paymentAddress = _paymentAddress;
-    }
-
-    /**
      * @dev Assemble a `BucketStorage.CreateBucketSynPackage` from provided elements
      * and send the transaction to BucketHub.
      *
@@ -116,16 +104,17 @@ abstract contract BucketApp is BaseApp, BucketStorage {
         address _creator,
         string memory _name,
         BucketStorage.BucketVisibilityType _visibility,
-        uint64 _chargedReadQuota,
+        address _paymentAddress,
         address _spAddress,
         uint256 _expireHeight,
-        bytes memory _sig
+        bytes memory _sig,
+        uint64 _chargedReadQuota
     ) internal virtual {
         BucketStorage.CreateBucketSynPackage memory createPkg = BucketStorage.CreateBucketSynPackage({
             creator: _creator,
             name: _name,
             visibility: _visibility,
-            paymentAddress: paymentAddress,
+            paymentAddress: _paymentAddress,
             primarySpAddress: _spAddress,
             primarySpApprovalExpiredHeight: _expireHeight,
             primarySpSignature: _sig,

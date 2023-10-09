@@ -74,6 +74,8 @@ contract EbookShop is AccessControl, BucketApp, ObjectApp, GroupApp {
     uint256 public feeRate;
     mapping(address => uint256) public income;
 
+    address public paymentAddress;
+
     function initialize(
         address _crossChain,
         address _bucketHub,
@@ -91,13 +93,14 @@ contract EbookShop is AccessControl, BucketApp, ObjectApp, GroupApp {
 
         feeRate = _feeRate;
         ebookToken = _ebookToken;
+        paymentAddress = _paymentAddress;
         bucketToken = CmnStorage(_bucketHub).ERC721Token();
         objectToken = CmnStorage(_objectHub).ERC721Token();
         groupToken = CmnStorage(_groupHub).ERC721Token();
         memberToken = GroupStorage(_groupHub).ERC1155Token();
 
         __base_app_init_unchained(_crossChain, _callbackGasLimit, _failureHandleStrategy);
-        __bucket_app_init_unchained(_bucketHub, _paymentAddress);
+        __bucket_app_init_unchained(_bucketHub);
         __group_app_init_unchained(_groupHub);
         __object_app_init_unchained(_objectHub);
     }
