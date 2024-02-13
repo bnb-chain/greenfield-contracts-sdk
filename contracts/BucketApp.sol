@@ -106,7 +106,8 @@ abstract contract BucketApp is BaseApp, BucketStorage {
         BucketStorage.BucketVisibilityType _visibility,
         address _paymentAddress,
         address _spAddress,
-        uint256 _expireHeight,
+        uint64 _expireHeight,
+        uint32 _globalVirtualGroupFamilyId,
         bytes memory _sig,
         uint64 _chargedReadQuota
     ) internal virtual {
@@ -117,6 +118,7 @@ abstract contract BucketApp is BaseApp, BucketStorage {
             paymentAddress: _paymentAddress,
             primarySpAddress: _spAddress,
             primarySpApprovalExpiredHeight: _expireHeight,
+            globalVirtualGroupFamilyId: _globalVirtualGroupFamilyId,
             primarySpSignature: _sig,
             chargedReadQuota: _chargedReadQuota,
             extraData: ""
@@ -139,7 +141,8 @@ abstract contract BucketApp is BaseApp, BucketStorage {
         BucketStorage.BucketVisibilityType _visibility,
         address _paymentAddress,
         address _spAddress,
-        uint256 _expireHeight,
+        uint64 _expireHeight,
+        uint32 _globalVirtualGroupFamilyId,
         bytes memory _sig,
         uint64 _chargedReadQuota,
         address _refundAddress,
@@ -154,6 +157,7 @@ abstract contract BucketApp is BaseApp, BucketStorage {
             paymentAddress: _paymentAddress,
             primarySpAddress: _spAddress,
             primarySpApprovalExpiredHeight: _expireHeight,
+            globalVirtualGroupFamilyId: _globalVirtualGroupFamilyId,
             primarySpSignature: _sig,
             chargedReadQuota: _chargedReadQuota,
             extraData: ""

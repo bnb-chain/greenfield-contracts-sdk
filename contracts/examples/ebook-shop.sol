@@ -139,7 +139,8 @@ contract EbookShop is AccessControl, BucketApp, ObjectApp, GroupApp {
         BucketStorage.BucketVisibilityType visibility,
         uint64 chargedReadQuota,
         address spAddress,
-        uint256 expireHeight,
+        uint64 expireHeight,
+        uint32 globalVirtualGroupFamilyId,
         bytes calldata sig
     ) external payable {
         require(bytes(name).length > 0, string.concat("EbookShop: ", ERROR_INVALID_NAME));
@@ -153,6 +154,7 @@ contract EbookShop is AccessControl, BucketApp, ObjectApp, GroupApp {
             paymentAddress,
             spAddress,
             expireHeight,
+            globalVirtualGroupFamilyId,
             sig,
             chargedReadQuota,
             msg.sender,
