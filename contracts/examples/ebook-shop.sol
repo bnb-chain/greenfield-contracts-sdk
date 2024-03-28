@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.0;
 
-import "@bnb-chain/greenfield-contracts/contracts/interface/IERC721Nontransferable.sol";
-import "@bnb-chain/greenfield-contracts/contracts/interface/IERC1155Nontransferable.sol";
+import "@bnb-chain/greenfield-contracts/contracts/interface/IERC721NonTransferable.sol";
+import "@bnb-chain/greenfield-contracts/contracts/interface/IERC1155NonTransferable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "../BucketApp.sol";
