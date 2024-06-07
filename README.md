@@ -28,9 +28,9 @@ contract MyDapp is BucketApp {
 For security purposes, always use the installed code without modifications. Do not copy-paste code from online sources or modify it yourself. 
 
 ## Learn More
-- [The Cross-Chain Programmability on Greenfield](https://docs.bnbchain.org/greenfield-docs/docs/guide/core-concept/programmability)
-- [Resource Mirror on Greenfield](https://docs.bnbchain.org/greenfield-docs/docs/faq/mirroring-faqs)
-- [Quick Start Building Smart Contract on Greenfield](https://docs.bnbchain.org/greenfield-docs/docs/tutorials/dapp/quick-start)
+- [The Cross-Chain Programmability on Greenfield](https://docs.bnbchain.org/bnb-greenfield/core-concept/cross-chain/programmability/)
+- [Resource Mirror on Greenfield](https://docs.bnbchain.org/bnb-greenfield/getting-started/general-faqs/)
+- [Quick Start Building Smart Contract on Greenfield](https://docs.bnbchain.org/bnb-greenfield/for-developers/tutorials/app/overview/)
 
 ## Disclaimer
 The software and related documentation are under active development, all subject to potential future change without 
